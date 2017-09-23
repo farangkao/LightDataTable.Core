@@ -156,12 +156,12 @@ It depends on primarykey, Id>0 to update and Id<=0 to insert.
         // Remove with expression
         users.RemoveAll(x=> x.UserName.Contains("test"));
         // we could also clone the whole object and insert it as new to the database like this
-        var clonedUser = users.Execute().Clone().ClearAllIdsHierarki();
+        var clonedUser = users.Execute().Clone().ClearAllIdsHierarchy();
         foreach (var user in clonedUser)
         {
             // Now this will clone the object to the database, of course all Foreign Key will be automatically assigned.
             // Role wont be cloned here. cource it has IndependedData attr we could choose to clone it too, by invoking
-            // .ClearAllIdsHierarki(true);
+            // .ClearAllIdsHierarchy(true);
             rep.Save(user);
         }
         Console.WriteLine(users.ToJson());
