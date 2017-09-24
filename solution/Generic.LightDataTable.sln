@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FastDeepCloner", "..\..\Fas
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test.Modules", "..\..\Test.Modules\Test.Modules.csproj", "{76E613DE-ED2E-4D93-BAAB-E630641574A0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "test.Modules.Core", "..\..\test.Modules.Core\test.Modules.Core\test.Modules.Core.csproj", "{C5AB6D33-9A07-45A0-8E31-94D1616C7483}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "test.Modules.Core", "..\test.Modules.Core\test.Modules.Core\test.Modules.Core.csproj", "{C5AB6D33-9A07-45A0-8E31-94D1616C7483}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
