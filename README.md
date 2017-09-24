@@ -76,12 +76,11 @@ let's start building our models, lets build a simple models User
     // lets create an object and call it UserRule
     // above the User class we have specified this class to be executed before save and after.
     // by adding [Rule(typeof(UserRule))] to the user class
-    public class UserRule : IDbRuleTrigger
+    public class UserRule : IDbRuleTrigger<User>
     {
-        public void BeforeSave(ICustomRepository repository, IDbEntity itemDbEntity)
+        public void BeforeSave(ICustomRepository repository, User itemDbEntity)
         {
-            var user = itemDbEntity as User;
-            if (string.IsNullOrEmpty(user.Password) || string.IsNullOrEmpty(user.UserName))
+            if (string.IsNullOrEmpty(itemDbEntity.Password) || string.IsNullOrEmpty(itemDbEntity.UserName))
             {
                 // this will do a transaction rollback and delete all changes that have happened to the database
                 throw new Exception("Password or UserName can not be empty");
@@ -89,14 +88,13 @@ let's start building our models, lets build a simple models User
             }
         }
 
-        public void AfterSave(ICustomRepository repository, IDbEntity itemDbEntity, long objectId)
+        public void AfterSave(ICustomRepository repository, User itemDbEntity, long objectId)
         {
-            var user = itemDbEntity as User;
-            user.ClearPropertChanges();// clear all changes.
+            itemDbEntity.ClearPropertChanges();// clear all changes.
             // lets do some changes here, when the item have updated..
-            user.Password = MethodHelper.EncodeStringToBase64(user.Password);
+            itemDbEntity.Password = MethodHelper.EncodeStringToBase64(itemDbEntity.Password);
             // and now we want to save this change to the database 
-            user.State = ItemState.Changed;
+            itemDbEntity.State = ItemState.Changed;
             // the lightdatatable will now know that it need to update the database agen.
         }
     }
