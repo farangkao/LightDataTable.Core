@@ -209,7 +209,7 @@ namespace Generic.LightDataTable.Transaction
                 this.CreateTransaction();
                 foreach (var migration in Migrations)
                 {
-                    var name = migration.GetType().FullName;
+                    var name = migration.GetType().FullName + migration.MigrationIdentifier;
                     var dbMigration = this.Get<DBMigration>().Where(x => x.Name == name).Execute();
                     if (dbMigration.Any())
                         continue;
