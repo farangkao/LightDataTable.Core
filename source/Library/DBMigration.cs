@@ -7,8 +7,6 @@ namespace Generic.LightDataTable.Library
     {
         public string Name { get; set; }
 
-        public byte[] MigrationData { get; set; }
-
         public DateTime DateCreated { get; set; }
 
     }

@@ -11,7 +11,7 @@ namespace Generic.LightDataTable.Library
         public Migration() { }
 
         /// <summary>
-        ///  Make sure that the key dose not exist in the database, if its a new Migration
+        ///  Make sure that the key dose not exist in the database
         /// </summary>
         public string MigrationIdentifier { get; set; }
 

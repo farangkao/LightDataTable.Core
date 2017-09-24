@@ -218,12 +218,6 @@ namespace Generic.LightDataTable.Transaction
                         Name = name,
                         DateCreated = DateTime.Now
                     };
-                    var bf = new BinaryFormatter();
-                    using (var ms = new MemoryStream())
-                    {
-                        bf.Serialize(ms, migration);
-                        item.MigrationData = ms.ToArray();
-                    }
                     migration.ExecuteMigration(this);
                     this.Save(item);
                 }

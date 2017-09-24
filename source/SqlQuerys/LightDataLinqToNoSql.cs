@@ -7,6 +7,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
+using FastDeepCloner;
 
 namespace Generic.LightDataTable.SqlQuerys
 {
@@ -361,6 +362,12 @@ namespace Generic.LightDataTable.SqlQuerys
                         var value = c.Value.GetType().GetFields().First().GetValue(c.Value) as IEnumerable;
                         if (value == null)
                             break;
+                        if (value.GetType().IsInternalType())
+                        {
+                            sb.Append(string.Format(value is string ? "'{0}'" : "{0}", value));
+                            break;
+                        }
+
                         var tValue = "";
                         foreach (var v in value)
                             tValue += string.Format(v.GetType() == typeof(string) ? "'{0}'," : "{0},", v);
@@ -396,7 +403,12 @@ namespace Generic.LightDataTable.SqlQuerys
 
         protected dynamic VisitMember(MemberExpression m, bool columnOnly)
         {
-            if (m.Expression != null && m.Expression.NodeType == ExpressionType.Parameter && (_overridedNodeType == null))
+            if (m.Expression != null && m.Expression.NodeType == ExpressionType.Constant && (_overridedNodeType == null))
+            {
+                VisitConstant(m.Expression as ConstantExpression);
+                return m;
+            }
+            else if (m.Expression != null && m.Expression.NodeType == ExpressionType.Parameter && (_overridedNodeType == null))
             {
                 _overridedNodeType = null;
                 var cl = m.Expression.Type;
