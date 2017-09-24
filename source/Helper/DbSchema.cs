@@ -18,7 +18,7 @@ namespace Generic.LightDataTable.Helper
 
         private static readonly Dictionary<Type, ILightDataTable> CachedObjectColumn = new Dictionary<Type, ILightDataTable>();
 
-        private static readonly Dictionary<Type, IDbRuleTrigger> CachedIDbRuleTrigger = new Dictionary<Type, IDbRuleTrigger>();
+        private static readonly Dictionary<Type, object> CachedIDbRuleTrigger = new Dictionary<Type, object>();
         private static ILightDataTable ObjectColumns(this ICustomRepository repository, Type type)
         {
             if (CachedObjectColumn.ContainsKey(type))
@@ -44,10 +44,11 @@ namespace Generic.LightDataTable.Helper
                 var objectRules = o.GetType().GetCustomAttribute<Rule>();
                 var tableName = o.GetType().GetCustomAttribute<Table>()?.Name ?? o.GetType().Name;
 
-                IDbRuleTrigger dbTrigger = null;
+                object dbTrigger = null;
                 if (objectRules != null && !CachedIDbRuleTrigger.ContainsKey(o.GetType()))
                 {
-                    dbTrigger = Activator.CreateInstance(objectRules.RuleType) as IDbRuleTrigger;
+     
+                    dbTrigger = Activator.CreateInstance(objectRules.RuleType) as object;
                     CachedIDbRuleTrigger.Add(o.GetType(), dbTrigger);
                 }
                 else if (objectRules != null)
@@ -67,10 +68,9 @@ namespace Generic.LightDataTable.Helper
                     }
                 }
 
-                //if (isIndependentData )
-                //    return value.Value;
+
                 if (!updateOnly)
-                    dbTrigger?.BeforeSave(repository, o); // Check the Rule before save
+                    dbTrigger?.GetType().GetMethod("BeforeSave").Invoke(dbTrigger,new List<object>(){ repository, o }.ToArray()); // Check the Rule before save
 
                 o.State = ItemState.Added;// reset State
 
@@ -115,8 +115,7 @@ namespace Generic.LightDataTable.Helper
 
                 if (updateOnly)
                     return value.Value;
-
-                dbTrigger?.AfterSave(repository, o, value.Value);// Check the Rule efter save
+                dbTrigger?.GetType().GetMethod("AfterSave").Invoke(dbTrigger, new List<object>() { repository, o, value.Value }.ToArray()); // Check the Rule before save
 
                 primaryKey.SetValue(o, value);
                 foreach (var prop in props.Where(x => !x.IsInternalType && x.GetCustomAttribute<ExcludeFromAbstract>() == null))

@@ -12,6 +12,7 @@ namespace Generic.LightDataTable.Attributes
         /// <summary>
         /// Define class rule by adding this attribute
         /// ruleType must inhert from IDbRuleTrigger
+        /// ex UserRule : IDbRuleTrigger<User/>
         /// </summary>
         /// <param name="ruleType"></param>
         public Rule(Type ruleType)

@@ -1,13 +1,13 @@
 ﻿namespace Generic.LightDataTable.InterFace
 {
-    public interface IDbRuleTrigger 
+    public interface IDbRuleTrigger<T> where T: class, IDbEntity
     {
         /// <summary>
         /// Event triggered before save an item
         /// </summary>
         /// <param name="repository"></param>
         /// <param name="itemDbEntity"></param>
-        void BeforeSave(ICustomRepository repository, IDbEntity itemDbEntity);
+        void BeforeSave(ICustomRepository repository, T itemDbEntity);
 
         /// <summary>
         /// triggered after saveing an item
@@ -15,6 +15,6 @@
         /// <param name="repository"></param>
         /// <param name="itemDbEntity"></param>
         /// <param name="objectId"></param>
-        void AfterSave(ICustomRepository repository, IDbEntity itemDbEntity, long objectId);
+        void AfterSave(ICustomRepository repository, T itemDbEntity, long objectId);
     }
 }

@@ -15,6 +15,7 @@ using Generic.LightDataTable.Library;
 
 namespace Generic.LightDataTable.Transaction
 {
+    /// <inheritdoc />
     public class TransactionData : ICustomRepository
     {
         /// <summary>
@@ -30,11 +31,12 @@ namespace Generic.LightDataTable.Transaction
         private static bool _tableMigrationCheck;
         private static IList<Migration> Migrations { get; set; }
 
+        private static IMigrationConfig Config { get; set; }
+
         /// <summary>
-        /// When enabled, LightDataTable will execute all avaiable Migration
+        /// When enabled, Light DataTable will execute all available Migration
         /// </summary>
         protected bool EnableMigration { get; private set; }
-
 
 
         private static void LoadPropertyChangedAss()
@@ -42,19 +44,14 @@ namespace Generic.LightDataTable.Transaction
             if (_assLoaded)
                 return;
             const string assemblyName = "ProcessedByFody";
-            foreach (var a in Assembly.GetEntryAssembly().DefinedTypes)
-            {
-                if (a.Name.Contains(assemblyName))
-                {
-
-                    _assLoaded = true;
-                    return;
-                }
-            }
-            throw new Exception("PropertyChanged.dll and Fody could not be found please install PropertyChanged.Fody and Fody. FodyWeavers.XML should look like <?xml version=\"1.0\" encoding=\"utf - 8\" ?>" +
-                Environment.NewLine + "<Weavers>" +
-                Environment.NewLine + "<PropertyChanged />" +
-                Environment.NewLine + "</Weavers> ");
+            if (!Assembly.GetEntryAssembly().DefinedTypes.Any(a => a.Name.Contains(assemblyName)))
+                throw new Exception(
+                    "PropertyChanged.dll and Fody could not be found please install PropertyChanged.Fody and Fody. FodyWeavers.XML should look like <?xml version=\"1.0\" encoding=\"utf - 8\" ?>" +
+                    Environment.NewLine + "<Weavers>" +
+                    Environment.NewLine + "<PropertyChanged />" +
+                    Environment.NewLine + "</Weavers> ");
+            _assLoaded = true;
+            return;
         }
 
         /// <summary>
@@ -93,7 +90,15 @@ namespace Generic.LightDataTable.Transaction
             }
 
             if (!_tableMigrationCheck && EnableMigration)
+            {
                 DbSchema.CreateTable<DBMigration>(this);
+
+                if (Assembly.GetEntryAssembly().DefinedTypes.Any(a => typeof(IMigrationConfig).IsAssignableFrom(a)))
+                    Config = Activator.CreateInstance(Assembly.GetEntryAssembly().DefinedTypes
+                        .First(a => typeof(IMigrationConfig).IsAssignableFrom(a))) as IMigrationConfig;
+
+                MigrationConfig(Config);
+            }
             _tableMigrationCheck = true;
         }
 
@@ -106,7 +111,8 @@ namespace Generic.LightDataTable.Transaction
         }
 
         /// <summary>
-        /// 
+        /// Create Transaction
+        /// Only one Transaction will be created until it get disposed
         /// </summary>
         /// <returns></returns>
         public SqlTransaction CreateTransaction()
@@ -142,6 +148,7 @@ namespace Generic.LightDataTable.Transaction
             return cmd.ExecuteScalar();
         }
 
+        /// <inheritdoc />
         public int ExecuteNonQuery(SqlCommand cmd)
         {
             ValidateConnection();
@@ -167,6 +174,7 @@ namespace Generic.LightDataTable.Transaction
             Dispose();
         }
 
+
         /// <summary>
         /// return a list of LightDataTable e.g. DataSet
         /// </summary>
@@ -187,15 +195,16 @@ namespace Generic.LightDataTable.Transaction
 
         /// <summary>
         /// Specifie the migrationConfig which containe a list Migration to migrate
+        /// the migration is executed automaticly but as long as you have class that inhert from IMigrationConfig
+        /// or you could manully execute a migration
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <exception cref="Exception"></exception>
-        protected void MigrationConfig<T>() where T : IMigrationConfig
+        protected void MigrationConfig<T>(T config) where T : IMigrationConfig
         {
             if (Migrations != null) return;
             try
             {
-                var config = Activator.CreateInstance<T>();
                 Migrations = config.GetMigrations(this) ?? new List<Migration>();
                 this.CreateTransaction();
                 foreach (var migration in Migrations)
@@ -220,10 +229,10 @@ namespace Generic.LightDataTable.Transaction
                 }
                 Commit();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 Rollback();
-                throw ex;
+                throw;
             }
         }
 

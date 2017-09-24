@@ -18,7 +18,9 @@ namespace Generic.LightDataTable.InterFace
         object ExecuteScalar(SqlCommand cmd);
 
         int ExecuteNonQuery(SqlCommand cmd);
+
         SqlTransaction CreateTransaction();
+
         void Rollback();
 
         void Commit();

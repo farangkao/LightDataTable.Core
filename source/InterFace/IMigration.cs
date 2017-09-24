@@ -13,7 +13,7 @@ namespace Generic.LightDataTable.InterFace
     public interface IMigration
     {
         /// <summary>
-        /// 
+        /// Do your db Changes here
         /// </summary>
         /// <param name="repository"></param>
         void ExecuteMigration(ICustomRepository repository);

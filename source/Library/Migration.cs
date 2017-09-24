@@ -8,8 +8,9 @@ namespace Generic.LightDataTable.Library
         /// Default cto
         /// </summary>
         public Migration() { }
+        /// <inheritdoc />
         /// <summary>
-        /// 
+        /// Do your db Changes here
         /// </summary>
         /// <param name="repository"></param>
         public virtual void ExecuteMigration(ICustomRepository repository)
