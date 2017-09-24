@@ -4,7 +4,7 @@ https://www.nuget.org/packages/Generic.LightDataTable/
 ## What is LightDataTable
 LightDataTable is an object-relation mappar that enable .NET developers to work with relations data using objects.
 LightDataTable is an alternative to entityframwork. is more flexible and much faster than entity framework.
-Even though it lacking database migration, its has a greater and more flexiable structure to work with.
+Its has a greater and more flexiable structure to work with than entityframework.
 ## Can i use it to an existing database
 Yes you could easily implement your existing modules and use attributes to map all your Primary Keys and Foreign Key without even
 touching the database.
@@ -195,6 +195,10 @@ will do a very painful quarry and se how it gets parsed.
              OFFSET 20
              ROWS FETCH NEXT 100 ROWS ONLY;
 ```
+## Limitations
+LightDataTable have only support to Mssql Db right now, but you could easily create your own transaction Data that inherit 
+ICustomRepository.
 
 ## Issues
-This project is under developing and it's not in its final state so please report any bugs or improvement you find
+This project is under developing and it's not in its final state so please report any bugs or improvement you might find
+
