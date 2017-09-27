@@ -27,10 +27,21 @@ namespace Generic.LightDataTable.SqlQuerys
 
         public List<string> WhereClause { get; private set; } = new List<string>();
 
-
+        public bool IsSqlLight { get; set; }
 
         public LightDataLinqToNoSql()
         {
+            _columns = new List<string>
+            {
+                (typeof(T).GetCustomAttribute<Table>()?.Name ?? typeof(T).Name) + ".*"
+            };
+            OrderBy = typeof(T).GetPrimaryKey().GetPropertyName();
+
+        }
+
+        public LightDataLinqToNoSql(bool isSqlLight)
+        {
+            IsSqlLight = isSqlLight;
             _columns = new List<string>
             {
                 (typeof(T).GetCustomAttribute<Table>()?.Name ?? typeof(T).Name) + ".*"
@@ -51,7 +62,9 @@ namespace Generic.LightDataTable.SqlQuerys
                     quary += System.Environment.NewLine + "ORDER BY " + OrderBy;
                 else quary += System.Environment.NewLine + "ORDER BY 1 ASC";
 
-                quary += System.Environment.NewLine + "OFFSET " + Skip + System.Environment.NewLine + "ROWS FETCH NEXT " + Take + " ROWS ONLY;";
+                if (!IsSqlLight)
+                    quary += System.Environment.NewLine + "OFFSET " + Skip + System.Environment.NewLine + "ROWS FETCH NEXT " + Take + " ROWS ONLY;";
+                else quary += System.Environment.NewLine + "LIMIT  " + Skip + System.Environment.NewLine + "," + Take + ";";
 
                 return quary;
             }
@@ -102,20 +115,17 @@ namespace Generic.LightDataTable.SqlQuerys
                 var type = typeof(LightDataLinqToNoSql<>).MakeGenericType(classtype);
                 var cl = Activator.CreateInstance(type) as dynamic;
                 cl._generatedKeys = _generatedKeys;
+                cl.IsSqlLight = IsSqlLight;
                 cl.Translate(m.Arguments.Last() as Expression);
                 cl._overridedNodeType = ExpressionType.MemberAccess;
                 cl.Visit(m.Arguments[0]);
                 sb.Append(cl.QuaryExist);
                 cl._overridedNodeType = null;
                 _generatedKeys = cl._generatedKeys;
-                //foreach (var join in cl.JoinClauses)
-                //    JoinClauses.Add(join.Key, join.Value);
                 return m;
             }
             else if (m.Method.Name == "IsNullOrEmpty")
             {
-                //IIF(UserName IS NULL, 1, IIF(UserName = '', 1, 0)))
-
                 sb.Append("(IIF(");
                 this.Visit(m.Arguments[0]);
                 sb.Append(" IS NULL ,1,IIF(");
@@ -132,7 +142,7 @@ namespace Generic.LightDataTable.SqlQuerys
                     var value = (m.Arguments[0] as ConstantExpression).Value;
                     this.Visit(m.Object);
                     sb.Append(" like ");
-                    var v = string.Format("'%{0}%'", value);
+                    var v = string.Format("String[%{0}%]", value);
                     sb.Append(v);
                 }
                 else
@@ -154,14 +164,14 @@ namespace Generic.LightDataTable.SqlQuerys
                     var value = (m.Arguments[0] as ConstantExpression).Value;
                     this.Visit(m.Object);
                     sb.Append(" like ");
-                    var v = string.Format("'{0}%'", value);
+                    var v = string.Format("String[{0}%]", value);
                     sb.Append(v);
                 }
                 else
                 {
                     this.Visit(m.Arguments[0]);
                     sb.Append(" like ");
-                    var v = string.Format("'{0}%'", ex.Value.GetType().GetFields().First().GetValue(ex.Value));
+                    var v = string.Format("String[{0}%]", ex.Value.GetType().GetFields().First().GetValue(ex.Value));
                     sb.Append(v);
                 }
                 return m;
@@ -175,14 +185,14 @@ namespace Generic.LightDataTable.SqlQuerys
                     var value = (m.Arguments[0] as ConstantExpression).Value;
                     this.Visit(m.Object);
                     sb.Append(" like ");
-                    var v = string.Format("'%{0}'", value);
+                    var v = string.Format("String[%{0}]", value);
                     sb.Append(v);
                 }
                 else
                 {
                     this.Visit(m.Arguments[0]);
                     sb.Append(" like ");
-                    var v = string.Format("'%{0}'", ex.Value.GetType().GetFields().First().GetValue(ex.Value));
+                    var v = string.Format("String[%{0}]", ex.Value.GetType().GetFields().First().GetValue(ex.Value));
                     sb.Append(v);
                 }
                 return m;
@@ -229,7 +239,9 @@ namespace Generic.LightDataTable.SqlQuerys
                     this.Visit(u.Operand);
                     if (u.ToString().Contains("IsNullOrEmpty"))
                     {
-                        if (sb.ToString().Length >= "{IsNullOrEmpty}".Length && sb.ToString().Substring(sb.ToString().Length - "{IsNullOrEmpty}".Length) == "{IsNullOrEmpty}" && sb.ToString().Contains("{IsNullOrEmpty}"))
+                        if (sb.ToString().Length >= "{IsNullOrEmpty}".Length &&
+                            sb.ToString().Substring(sb.ToString().Length - "{IsNullOrEmpty}".Length) == "{IsNullOrEmpty}"
+                            && sb.ToString().Contains("{IsNullOrEmpty}"))
                             sb = new StringBuilder(sb.ToString().Substring(0, sb.ToString().Length - "{IsNullOrEmpty}".Length));
                         sb.Append(" = 0 ");
 
@@ -255,7 +267,8 @@ namespace Generic.LightDataTable.SqlQuerys
         {
             sb.Append("(");
             this.Visit(b.Left);
-            if (sb.ToString().Length >= "{IsNullOrEmpty}".Length && sb.ToString().Substring(sb.ToString().Length - "{IsNullOrEmpty}".Length) == "{IsNullOrEmpty}" &&
+            if (sb.ToString().Length >= "{IsNullOrEmpty}".Length &&
+                sb.ToString().Substring(sb.ToString().Length - "{IsNullOrEmpty}".Length) == "{IsNullOrEmpty}" &&
                 sb.ToString().Contains("{IsNullOrEmpty}") && !(b.NodeType == ExpressionType.Or ||
                 b.NodeType == ExpressionType.OrElse ||
                 b.NodeType == ExpressionType.And ||
@@ -347,15 +360,11 @@ namespace Generic.LightDataTable.SqlQuerys
                         break;
 
                     case TypeCode.String:
-                        sb.Append("'");
-                        sb.Append(c.Value);
-                        sb.Append("'");
+                        sb.Append(string.Format("String[{0}]", c.Value));
                         break;
 
                     case TypeCode.DateTime:
-                        sb.Append("'");
-                        sb.Append(c.Value);
-                        sb.Append("'");
+                        sb.Append(string.Format("Date[{0}]", c.Value));
                         break;
 
                     case TypeCode.Object:
@@ -364,15 +373,14 @@ namespace Generic.LightDataTable.SqlQuerys
                             break;
                         if (value.GetType().IsInternalType())
                         {
-                            sb.Append(string.Format(value is string ? "'{0}'" : "{0}", value));
+                            sb.Append(string.Format(value is string ? "String[{0}]" : "{0}", value));
                             break;
                         }
 
                         var tValue = "";
                         foreach (var v in value)
-                            tValue += string.Format(v.GetType() == typeof(string) ? "'{0}'," : "{0},", v);
+                            tValue += string.Format(v.GetType() == typeof(string) ? "String[%{0}%]," : "{0}, ", v);
                         sb.Append(tValue.TrimEnd(','));
-                        //throw new NotSupportedException(string.Format("The constant for '{0}' is not supported", c.Value));
                         break;
                     default:
                         sb.Append(c.Value);
@@ -444,13 +452,13 @@ namespace Generic.LightDataTable.SqlQuerys
                 var v = "";
                 if (prop != null)
                 {
-                    v += string.Format("left join [{0}] {1} on {2}.[{3}] = {4}.[{5}]", table, randomTableName, randomTableName, primaryId, parentTable, prop.GetPropertyName());
+                    v += string.Format("LEFT JOIN [{0}] {1} ON [{2}].[{3}] = [{4}].[{5}]", table, randomTableName, randomTableName, primaryId, parentTable, prop.GetPropertyName());
                 }
                 else
                 {
                     prop = FastDeepCloner.DeepCloner.GetFastDeepClonerProperties(cl).FirstOrDefault(x => x.ContainAttribute<ForeignKey>() && x.GetCustomAttribute<ForeignKey>().Type == parentType);
                     if (prop != null)
-                        v += string.Format("left join [{0}] {1} on {2}.[{3}] = {4}.[{5}]", table, randomTableName, randomTableName, prop.GetPropertyName(), parentTable, primaryId);
+                        v += string.Format("LEFT JOIN [{0}] {1} ON [{2}].[{3}] = [{4}].[{5}]", table, randomTableName, randomTableName, prop.GetPropertyName(), parentTable, primaryId);
                 }
 
                 JoinClauses.Add(key, new Tuple<string, string>(randomTableName, v));
@@ -474,15 +482,13 @@ namespace Generic.LightDataTable.SqlQuerys
                 var v = "";
                 if (prop != null)
                 {
-                    v += string.Format("INNER JOIN [{0}] {1} on {2}.[{3}] = {4}.[{5}]", parentTable, randomTableName, table, primaryId, randomTableName, prop.GetPropertyName());
+                    v += string.Format("INNER JOIN [{0}] {1} ON [{2}].[{3}] = [{4}].[{5}]", parentTable, randomTableName, table, primaryId, randomTableName, prop.GetPropertyName());
                 }
                 else
                 {
                     throw new NotSupportedException(string.Format("CLASS STRUCTURE IS NOT SUPPORTED MEMBER{0}", m.Member.Name));
-                    //prop = FastDeepCloner.DeepCloner.GetFastDeepClonerProperties(cl).FirstOrDefault(x => x.ContainAttribute<ForeignKey>() && x.GetCustomAttribute<ForeignKey>().Type == parentType);
-                    //if (prop != null)
-                    //    v += string.Format("left join [{0}] {1} on {2}.[{3}] = {4}.[{5}]", table, randomTableName, randomTableName, MethodHelper.GetPropertyName(prop), parentTable, primaryId);
                 }
+
                 if (!string.IsNullOrEmpty(v))
                     JoinClauses.Add(key, new Tuple<string, string>(randomTableName, v));
                 return m;

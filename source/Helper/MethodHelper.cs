@@ -10,6 +10,11 @@ using Generic.LightDataTable.Library;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
+using System.Data.Common;
+using System.Text.RegularExpressions;
+using System.Data;
+using System.Data.SqlClient;
+using System.Data.SQLite;
 
 namespace Generic.LightDataTable
 {
@@ -23,7 +28,7 @@ namespace Generic.LightDataTable
         {
             {typeof(int), "BIGINT"},
             {typeof(long), "INT"},
-            {typeof(string), "NVARCHAR(max)"},
+            {typeof(string), "NVARCHAR(4000)"},
             {typeof(bool), "BIT"},
             {typeof(DateTime), "DATETIME"},
             {typeof(float), "FLOAT"},
@@ -32,7 +37,43 @@ namespace Generic.LightDataTable
             {typeof(byte[]), "varbinary(MAX)"}
         };
 
+        internal static DbCommand ProcessSql(this ICustomRepository repository, DbConnection connection, DbTransaction tran, string sql)
+        {
+            var stringExp = new Regex(@"String\[.+?\]");
+            var DateExp = new Regex(@"String\[.+?\]");
+            var i = 0;
+            var dicCols = new Dictionary<string, Tuple<object, SqlDbType>>();
+            MatchCollection matches = null;
+            while ((matches = stringExp.Matches(sql)).Count > 0)
+            {
+                Match exp = matches[0];
+                var col = "@CO" + i + "L";
+                object str = exp.Value.TrimEnd(']').Substring(@"String\[".Length - 1);
+                sql = sql.Remove(exp.Index, exp.Value.Length);
+                sql = sql.Insert(exp.Index, col);
+                dicCols.Add(col, new Tuple<object, SqlDbType>(str.ConvertValue<string>(), SqlDbType.NVarChar));
+                i++;
+            }
 
+            while ((matches = DateExp.Matches(sql)).Count > 0)
+            {
+                Match exp = matches[0];
+                var col = "@CO" + i + "L";
+                object str = exp.Value.TrimEnd(']').Substring(@"String\[".Length - 1);
+                sql = sql.Remove(exp.Index, exp.Value.Length);
+                sql = sql.Insert(exp.Index, col);
+                dicCols.Add(col, new Tuple<object, SqlDbType>(str.ConvertValue<DateTime>(), SqlDbType.DateTime));
+                i++;
+            }
+
+            DbCommand cmd;
+            if (repository.GetDataBaseType() == Helper.DataBaseTypes.Mssql)
+                cmd = tran != null ? new SqlCommand(sql, connection as SqlConnection, tran as SqlTransaction) : new SqlCommand(sql, connection as SqlConnection);
+            else cmd = tran == null ? new SQLiteCommand(sql, connection as SQLiteConnection) : new SQLiteCommand(sql, connection as SQLiteConnection, tran as SQLiteTransaction);
+            foreach (var dic in dicCols)
+                repository.AddInnerParameter(cmd, dic.Key, dic.Value.Item1, dic.Value.Item2);
+            return cmd;
+        }
 
         public static Attribute GetAttributeType<T>() where T : Attribute
         {
@@ -44,7 +85,6 @@ namespace Generic.LightDataTable
         {
             if (Nullable.GetUnderlyingType(type) != null)
                 type = Nullable.GetUnderlyingType(type);
-
             return DbMapper.ContainsKey(type) ? DbMapper[type] : null;
         }
 
@@ -65,7 +105,7 @@ namespace Generic.LightDataTable
             return data.Rows.First().TryValueAndConvert<T>(0, true);
         }
 
-        public static List<string> ConvertExpressionToIncludeList(this Expression[] actions, bool onlyLast = false)
+        internal static List<string> ConvertExpressionToIncludeList(this Expression[] actions, bool onlyLast = false)
         {
             var result = new List<string>();
             if (actions == null) return result;
@@ -89,7 +129,6 @@ namespace Generic.LightDataTable
                 else if (tempList.Any())
                     result.Add(tempList.Last());
             }
-
             return result;
         }
 
@@ -116,13 +155,11 @@ namespace Generic.LightDataTable
             if (!CachedProperties.ContainsKey(item.GetType()))
                 CachedProperties.Add(item.GetType(), DeepCloner.GetFastDeepClonerProperties(item.GetType()).GroupBy(x => x.Name).Select(x => x.First()).ToDictionary(x => x.Name, x => x));
             return CachedProperties[item.GetType()][propertyName].GetValue(item);
-
         }
 
         public static Expression<Func<TInput, object>> PropertyExpression<TInput, TOutput>(this Expression<Func<TInput, TOutput>> expression)
         {
             var memberName = ((MemberExpression)expression.Body).Member.Name;
-
             var param = Expression.Parameter(typeof(TInput));
             var field = Expression.Property(param, memberName);
             return Expression.Lambda<Func<TInput, object>>(field, param);
@@ -137,10 +174,8 @@ namespace Generic.LightDataTable
         {
             if (type.GetTypeInfo().IsArray)
                 return type.GetElementType();
-
             if (type.GenericTypeArguments.Any())
                 return type.GenericTypeArguments.First();
-
             if (type.FullName?.Contains("List`1") ?? false)
                 return type.GetRuntimeProperty("Item").PropertyType;
             return type;
@@ -150,7 +185,6 @@ namespace Generic.LightDataTable
         {
             if (!source.EndsWith(value))
                 return source;
-
             return source.Remove(source.LastIndexOf(value));
         }
 
@@ -179,7 +213,6 @@ namespace Generic.LightDataTable
         {
             if (CachedPrimaryKeys.ContainsKey(item.GetType()))
                 return CachedPrimaryKeys[item.GetType()];
-
             CachedPrimaryKeys.Add(item.GetType(), DeepCloner.GetFastDeepClonerProperties(item.GetType()).FirstOrDefault(x => x.ContainAttribute<PrimaryKey>()));
             return CachedPrimaryKeys[item.GetType()];
         }
@@ -188,7 +221,6 @@ namespace Generic.LightDataTable
         {
             if (CachedPrimaryKeys.ContainsKey(type))
                 return CachedPrimaryKeys[type];
-
             CachedPrimaryKeys.Add(type, DeepCloner.GetFastDeepClonerProperties(type).FirstOrDefault(x => x.ContainAttribute<PrimaryKey>()));
             return CachedPrimaryKeys[type];
         }

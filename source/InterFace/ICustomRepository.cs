@@ -1,29 +1,29 @@
 ﻿using Generic.LightDataTable.Interface;
 using System;
 using System.Data;
-using System.Data.SqlClient;
+using System.Data.Common;
+
 
 namespace Generic.LightDataTable.InterFace
 {
    public interface ICustomRepository : IDisposable
     {
-        ILightDataTable GetLightDataTable(SqlCommand cmd, string primaryKey = null);
+        ILightDataTable GetLightDataTable(DbCommand cmd, string primaryKey = null);
 
-        SqlCommand GetSqlCommand(string sql);
+        DbCommand GetSqlCommand(string sql);
 
-        void AddInnerParameter(SqlCommand cmd, string attrName, object value, SqlDbType dbType  = SqlDbType.NVarChar);
+        void AddInnerParameter(DbCommand cmd, string attrName, object value, SqlDbType dbType  = SqlDbType.NVarChar);
 
         SqlDbType GetSqlType(Type type);
 
-        object ExecuteScalar(SqlCommand cmd);
+        object ExecuteScalar(DbCommand cmd);
 
-        int ExecuteNonQuery(SqlCommand cmd);
+        int ExecuteNonQuery(DbCommand cmd);
 
-        SqlTransaction CreateTransaction();
+        DbTransaction CreateTransaction();
 
         void Rollback();
 
         void Commit();
-
     }
 }

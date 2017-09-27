@@ -10,14 +10,14 @@ using Generic.LightDataTable.Helper;
 using Generic.LightDataTable.Interface;
 using Generic.LightDataTable.InterFace;
 using Generic.LightDataTable.Library;
-using Generic.LightDataTable;
-
+using System.Data.SQLite;
 
 namespace Generic.LightDataTable.Transaction
 {
     /// <inheritdoc />
-    public class TransactionData : ICustomRepository
+    public class TransactionLiteData : ICustomRepository
     {
+
         /// <summary>
         /// 
         /// </summary>
@@ -25,8 +25,8 @@ namespace Generic.LightDataTable.Transaction
         /// <summary>
         /// Created sqlConnection
         /// </summary>
-        protected SqlConnection SqlConnection { get; private set; }
-        internal SqlTransaction Trans { get; private set; }
+        protected SQLiteConnection SqlConnection { get; private set; }
+        internal SQLiteTransaction Trans { get; private set; }
         private static bool _assLoaded;
         private static bool _tableMigrationCheck;
         private static IList<Migration> Migrations { get; set; }
@@ -43,6 +43,15 @@ namespace Generic.LightDataTable.Transaction
         {
             if (_assLoaded)
                 return;
+            //// ok Lets load sqlLight
+            //var outPutDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().CodeBase);
+            //var path = Path.Combine(outPutDirectory, @"ExternalDLL\System.Data.SQLite.dll");
+            //while (!File.Exists(path))
+            //    path = Path.Combine(string.Join("\\", outPutDirectory.Split('\\').Reverse().Take(outPutDirectory.Split('\\').Length -1).Reverse()), @"ExternalDLL\System.Data.SQLite.dll");
+
+            //var DLL = Assembly.LoadFile(path);
+
+
             const string assemblyName = "ProcessedByFody";
             if (!Assembly.GetEntryAssembly().DefinedTypes.Any(a => a.Name.Contains(assemblyName)))
                 throw new Exception(
@@ -61,20 +70,24 @@ namespace Generic.LightDataTable.Transaction
         /// AppSettingsName that containe the connectionstringName,
         /// OR ConnectionStringName,
         /// OR Full ConnectionString
-        /// Default is Dbconnection
+        /// Default is Data Source=MyDatabase.sqlite;Version=3;
         /// </param>
+        /// <param name="createIfNotExist">Create that database file if it dose not exist</param>
         /// <param name="enableMigration">enable and disable Migrations</param>
-        public TransactionData(string appSettingsOrSqlConnectionString = "Dbconnection", bool enableMigration = false)
+        public TransactionLiteData(string appSettingsOrSqlConnectionString = "Dbconnection", bool enableMigration = false)
         {
+
+
             EnableMigration = enableMigration;
             LoadPropertyChangedAss();
             if (string.IsNullOrEmpty(appSettingsOrSqlConnectionString))
                 if (string.IsNullOrEmpty(SqlConnectionStringString))
                     throw new Exception("appSettingsOrSqlConnectionString cant be empty");
 
+
             if (string.IsNullOrEmpty(appSettingsOrSqlConnectionString)) return;
 
-            if (appSettingsOrSqlConnectionString.Contains(";"))
+            if (appSettingsOrSqlConnectionString.Contains(";") || appSettingsOrSqlConnectionString.Contains(".sql"))
                 SqlConnectionStringString = appSettingsOrSqlConnectionString; // its full connectionString
 
             // set connectionString by appsettings
@@ -86,7 +99,8 @@ namespace Generic.LightDataTable.Transaction
             }
             else
             {
-                SqlConnectionStringString = ConfigurationManager.ConnectionStrings[appSettingsOrSqlConnectionString].ConnectionString;
+                if (!(appSettingsOrSqlConnectionString.Contains(";") || appSettingsOrSqlConnectionString.Contains(".sql")))
+                    SqlConnectionStringString = ConfigurationManager.ConnectionStrings[appSettingsOrSqlConnectionString].ConnectionString;
             }
 
             if (!_tableMigrationCheck && EnableMigration)
@@ -102,10 +116,12 @@ namespace Generic.LightDataTable.Transaction
             _tableMigrationCheck = true;
         }
 
+
+
         private void ValidateConnection()
         {
             if (SqlConnection == null)
-                SqlConnection = new SqlConnection(SqlConnectionStringString);
+                SqlConnection = new SQLiteConnection(SqlConnectionStringString);
             if (SqlConnection.State == ConnectionState.Broken || SqlConnection.State == ConnectionState.Closed)
                 SqlConnection.Open();
         }
@@ -151,6 +167,7 @@ namespace Generic.LightDataTable.Transaction
         /// <inheritdoc />
         public int ExecuteNonQuery(DbCommand cmd)
         {
+
             ValidateConnection();
             return cmd.ExecuteNonQuery();
         }
@@ -209,8 +226,16 @@ namespace Generic.LightDataTable.Transaction
                 this.CreateTransaction();
                 foreach (var migration in Migrations)
                 {
+                    var dbMigration = new List<DBMigration>();
                     var name = migration.GetType().FullName + migration.MigrationIdentifier;
-                    var dbMigration = this.Get<DBMigration>().Where(x => x.Name == name).Execute();
+                    try
+                    {
+                        dbMigration = this.Get<DBMigration>().Where(x => x.Name == name).Execute();
+                    }
+                    catch (Exception e)
+                    {
+                        
+                    }
                     if (dbMigration.Any())
                         continue;
                     var item = new DBMigration
@@ -274,13 +299,15 @@ namespace Generic.LightDataTable.Transaction
                 attrName = "@" + attrName;
 
             var sqlDbTypeValue = value ?? DBNull.Value;
-            var param = new SqlParameter
-            {
-                SqlDbType = dbType,
-                Value = sqlDbTypeValue,
-                ParameterName = attrName
-            };
-            cmd.Parameters.Add(param);
+            (cmd as SQLiteCommand).Parameters.AddWithValue(attrName, value);
+            //var param = new System.Data.SQLite.SQLiteParameter
+            //{
+            //    SqlDbType = dbType,
+            //    DbType
+            //    Value = sqlDbTypeValue,
+            //    ParameterName = attrName
+            //};
+            //cmd.Parameters.Add(param);
         }
 
         /// <summary>

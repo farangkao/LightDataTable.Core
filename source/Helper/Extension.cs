@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 using FastDeepCloner;
 using Generic.LightDataTable.Attributes;
 using Generic.LightDataTable.Helper;
+using Generic.LightDataTable.Transaction;
 
 namespace Generic.LightDataTable
 {
@@ -62,6 +63,7 @@ namespace Generic.LightDataTable
         }
 
 
+
         /// <summary>
         /// 
         /// </summary>
@@ -106,6 +108,11 @@ namespace Generic.LightDataTable
                 }
                 entity.ClearPropertChanges();
             }
+        }
+
+        internal static DataBaseTypes GetDataBaseType(this ICustomRepository repository)
+        {
+            return repository is TransactionData ? DataBaseTypes.Mssql : DataBaseTypes.Sqllight;
         }
 
         internal static T ToType<T>(this object o) where T : class
@@ -154,6 +161,24 @@ namespace Generic.LightDataTable
         {
             if (o != null)
                 DbSchema.DeleteAbstract(repository, o, true);
+        }
+
+        /// <summary>
+        /// This will recreate the table and if it has a ForeignKey to other tables it will also recreate those table to
+        /// use wisly
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="repository"></param>
+        /// <param name="force"> Recreate th table</param>
+
+        public static void CreateTable<T>(this ICustomRepository repository, bool force = false) where T : class, IDbEntity
+        {
+            DbSchema.CreateTable(repository, typeof(T), null, true, force);
+        }
+
+        public static void RemoveTable<T>(this ICustomRepository repository) where T : class, IDbEntity
+        {
+            DbSchema.RemoveTable(repository, typeof(T));
         }
 
         /// <summary>
@@ -349,21 +374,45 @@ namespace Generic.LightDataTable
                 return data;
             data.TablePrimaryKey = primaryKey;
 
-            var dataRowCollection = reader.GetSchemaTable()?.Rows;
-            if (dataRowCollection != null)
-                foreach (DataRow item in dataRowCollection)
+            if (reader.FieldCount <= 0)
+            {
+                reader.Close();
+                reader.Dispose();
+                return data;
+            }
+            try
+            {
+
+
+
+                var dataRowCollection = reader.GetSchemaTable()?.Rows;
+                if (dataRowCollection != null)
+                    foreach (DataRow item in dataRowCollection)
+                    {
+                        //var isKey = Converter<bool>.Parse(item["IsKey"]);
+                        var columnName = item["ColumnName"].ToString();
+                        var dataType = TypeByTypeAndDbIsNull(item["DataType"] as Type,
+                            MethodHelper.ConvertValue<bool>(item["AllowDBNull"]));
+                        if (data.Columns.ContainsKey(columnName))
+                            columnName = columnName + i;
+                        data.AddColumn(columnName, dataType);
+
+                        i++;
+                    }
+            }
+            catch
+            {
+                for (int col = 0; col < reader.FieldCount; col++)
                 {
-                    //var isKey = Converter<bool>.Parse(item["IsKey"]);
-                    var columnName = item["ColumnName"].ToString();
-                    var dataType = TypeByTypeAndDbIsNull(item["DataType"] as Type,
-                        MethodHelper.ConvertValue<bool>(item["AllowDBNull"]));
+                    var columnName = reader.GetName(col);
+                    var dataType = TypeByTypeAndDbIsNull(reader.GetFieldType(col) as Type,
+                        MethodHelper.ConvertValue<bool>(true));
                     if (data.Columns.ContainsKey(columnName))
                         columnName = columnName + i;
                     data.AddColumn(columnName, dataType);
 
-                    i++;
                 }
-
+            }
 
             while (reader.Read())
             {

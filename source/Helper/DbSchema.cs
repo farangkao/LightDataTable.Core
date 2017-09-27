@@ -9,6 +9,8 @@ using System.Collections;
 using System;
 using FastDeepCloner;
 using Generic.LightDataTable.Interface;
+using Generic.LightDataTable.Transaction;
+using System.Data.Common;
 
 namespace Generic.LightDataTable.Helper
 {
@@ -24,9 +26,13 @@ namespace Generic.LightDataTable.Helper
             if (CachedObjectColumn.ContainsKey(type))
                 return CachedObjectColumn[type];
             var table = type.GetCustomAttribute<Table>()?.Name ?? type.Name;
-            var cmd = repository.GetSqlCommand("SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'" + table + "'");
+            var cmd = repository.GetSqlCommand(repository.GetDataBaseType() == DataBaseTypes.Mssql ?
+                "SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'" + table + "'"
+                : "SELECT name as COLUMN_NAME, type as DATA_TYPE  FROM pragma_table_info('" + table + "');");
             var data = repository.GetLightDataTable(cmd, "COLUMN_NAME");
-            CachedObjectColumn.Add(type, data);
+            if (data.Rows.Any())
+                CachedObjectColumn.Add(type, data);
+            else return data;
             return CachedObjectColumn[type];
         }
 
@@ -47,7 +53,7 @@ namespace Generic.LightDataTable.Helper
                 object dbTrigger = null;
                 if (objectRules != null && !CachedIDbRuleTrigger.ContainsKey(o.GetType()))
                 {
-     
+
                     dbTrigger = Activator.CreateInstance(objectRules.RuleType) as object;
                     CachedIDbRuleTrigger.Add(o.GetType(), dbTrigger);
                 }
@@ -61,7 +67,7 @@ namespace Generic.LightDataTable.Helper
                     value = null;
                 else if (value.HasValue && !updateOnly)
                 {
-                    var data = Select(repository, o.GetType(), Querys.Where.Column(primaryKey.GetPropertyName()).Equal(value.Value).ToQueryItem).Rows.FirstOrDefault();
+                    var data = Select(repository, o.GetType(), Querys.Where(repository.GetDataBaseType() == DataBaseTypes.Sqllight).Column(primaryKey.GetPropertyName()).Equal(value.Value).ToQueryItem).Rows.FirstOrDefault();
                     if (data != null)
                     {
                         o.Merge(data.ToObject(o.GetType()) as InterFace.IDbEntity);
@@ -70,7 +76,7 @@ namespace Generic.LightDataTable.Helper
 
 
                 if (!updateOnly)
-                    dbTrigger?.GetType().GetMethod("BeforeSave").Invoke(dbTrigger,new List<object>(){ repository, o }.ToArray()); // Check the Rule before save
+                    dbTrigger?.GetType().GetMethod("BeforeSave").Invoke(dbTrigger, new List<object>() { repository, o }.ToArray()); // Check the Rule before save
 
                 o.State = ItemState.Added;// reset State
 
@@ -80,12 +86,13 @@ namespace Generic.LightDataTable.Helper
                 if (!value.HasValue)
                 {
                     sql = "INSERT INTO [" + tableName + "](" + string.Join(",", cols.Select(x => "[" + x.GetPropertyName() + "]")) + ") Values(";
-                    sql += string.Join(",", cols.Select(x => "@" + x.GetPropertyName())) + "); SELECT IDENT_CURRENT('" + tableName + "');";
+                    sql += string.Join(",", cols.Select(x => "@" + x.GetPropertyName())) + ");";
+                    sql += repository.GetDataBaseType() == DataBaseTypes.Sqllight ? " select last_insert_rowid();" : " SELECT IDENT_CURRENT('" + tableName + "');";
                 }
                 else
                 {
                     sql += string.Join(",", cols.Select(x => "[" + x.GetPropertyName() + "]" + " = @" + MethodHelper.GetPropertyName(x)));
-                    sql += Querys.Where.Column(primaryKey.GetPropertyName()).Equal(value).Execute();
+                    sql += Querys.Where(repository.GetDataBaseType() == DataBaseTypes.Sqllight).Column(primaryKey.GetPropertyName()).Equal(value).Execute();
                 }
 
                 var cmd = repository.GetSqlCommand(sql);
@@ -186,7 +193,7 @@ namespace Generic.LightDataTable.Helper
             if (!CachedSql.ContainsKey(sqlKey))
             {
                 var key = type.GetActualType().GetPrimaryKey().GetPropertyName();
-                CachedSql.Add(sqlKey, Querys.Select(type.GetActualType()).Where.Column<long>(key).Equal("@ID", true).Execute());
+                CachedSql.Add(sqlKey, Querys.Select(type.GetActualType(), repository.GetDataBaseType() == DataBaseTypes.Sqllight).Where.Column<long>(key).Equal("@ID", true).Execute());
             }
             var cmd = repository.GetSqlCommand(CachedSql[sqlKey]);
             repository.AddInnerParameter(cmd, "@ID", id, System.Data.SqlDbType.BigInt);
@@ -210,7 +217,7 @@ namespace Generic.LightDataTable.Helper
         {
             var type = typeof(T);
             var sql = new StringBuilder();
-            sql.Append(Querys.Select(type).Execute());
+            sql.Append(Querys.Select(type, repository.GetDataBaseType() == DataBaseTypes.Sqllight).Execute());
             if (quary != null && quary.HasValue())
                 sql.Append(quary.Execute());
 
@@ -231,7 +238,7 @@ namespace Generic.LightDataTable.Helper
         {
             var type = typeof(T);
             var sql = new StringBuilder();
-            sql.Append(Querys.Select(type).Execute());
+            sql.Append(Querys.Select(type, repository.GetDataBaseType() == DataBaseTypes.Sqllight).Execute());
             if (!string.IsNullOrEmpty(quary))
                 sql = new StringBuilder(quary);
 
@@ -242,7 +249,7 @@ namespace Generic.LightDataTable.Helper
         internal static ILightDataTable Select(ICustomRepository repository, Type type, QueryItem quary = null)
         {
             var sql = new StringBuilder();
-            sql.Append(Querys.Select(type).Execute());
+            sql.Append(Querys.Select(type, repository.GetDataBaseType() == DataBaseTypes.Sqllight).Execute());
             if (quary != null && quary.HasValue())
                 sql.Append(quary.Execute());
 
@@ -263,7 +270,7 @@ namespace Generic.LightDataTable.Helper
         {
             var sqlKey = type.FullName + "GetSqlAll";
             if (!CachedSql.ContainsKey(sqlKey))
-                CachedSql.Add(sqlKey, Querys.Select(type).Execute());
+                CachedSql.Add(sqlKey, Querys.Select(type, repository.GetDataBaseType() == DataBaseTypes.Sqllight).Execute());
             return repository.GetLightDataTable(repository.GetSqlCommand(CachedSql[sqlKey])).Rows.ToObject(type);
         }
 
@@ -283,7 +290,7 @@ namespace Generic.LightDataTable.Helper
         {
             var sqlKey = type.FullName + "GetByColumn" + column;
             if (!CachedSql.ContainsKey(sqlKey))
-                CachedSql.Add(sqlKey, Querys.Select(type).Where.Column<long>(column).Equal("@ID", true).Execute());
+                CachedSql.Add(sqlKey, Querys.Select(type, repository.GetDataBaseType() == DataBaseTypes.Sqllight).Where.Column<long>(column).Equal("@ID", true).Execute());
 
             var cmd = repository.GetSqlCommand(CachedSql[sqlKey]);
             repository.AddInnerParameter(cmd, "@ID", id, System.Data.SqlDbType.BigInt);
@@ -296,46 +303,177 @@ namespace Generic.LightDataTable.Helper
         }
 
 
-        internal static void CreateTable<T>(ICustomRepository repository, bool force= false)
+        internal static void RemoveTable(ICustomRepository repository, Type tableType, bool commit = false, List<Type> tableRemoved = null, bool remove = true)
         {
-            var tableData = ObjectColumns(repository, typeof(T));
-            if (tableData == null || tableData.Rows.Any())
+            if (commit)
+                repository.CreateTransaction();
+            if (tableRemoved == null)
+                tableRemoved = new List<Type>();
+            if (tableRemoved.Any(x => x == tableType))
                 return;
+            tableRemoved.Insert(0, tableType);
+            var props = DeepCloner.GetFastDeepClonerProperties(tableType);
+
+            foreach (var prop in props.Where(x => (!x.IsInternalType || x.ContainAttribute<ForeignKey>()) && !x.ContainAttribute<ExcludeFromAbstract>()))
+            {
+                var key = prop.GetCustomAttribute<ForeignKey>();
+                if (key != null && tableRemoved.Any(x => x == key.Type))
+                    continue;
+                if (key != null)
+                    RemoveTable(repository, key.Type, commit, tableRemoved, false);
+                else RemoveTable(repository, prop.PropertyType.GetActualType(), commit, tableRemoved, false);
+
+            }
+
+            if (!remove)
+                return;
+
+            var tableData = ObjectColumns(repository, tableType);
+            if (!tableData.Rows.Any())
+                return;
+            var c = tableRemoved.Count;
+            while (c > 0)
+            {
+                
+                for (var i = tableRemoved.Count - 1; i >= 0; i--)
+                {
+                    try
+                    {
+                        var tType = tableRemoved[i];
+                        CachedObjectColumn.Remove(tType);
+                        var tableName = tType.GetCustomAttribute<Table>()?.Name ?? tType.Name;
+                        var cmd = repository.GetSqlCommand("DROP TABLE [" + tableName + "];");
+                        repository.ExecuteNonQuery(cmd);
+                        c--;
+                    }
+                    catch { }
+                }
+            }
+            if (commit)
+                repository.Commit();
+
+        }
+
+
+        internal static string CreateTable(ICustomRepository repository, Type tableType, List<Type> createdTables = null, bool commit = true, bool force = false, Dictionary<string, Tuple<string, ForeignKey>> keys = null)
+        {
+            if (createdTables == null)
+                createdTables = new List<Type>();
+            var tableData = ObjectColumns(repository, tableType);
+            if (createdTables.Any(x => x == tableType))
+                return null;
+            if (!force && tableData.Rows.Any())
+                return null;
+
             repository.CreateTransaction();
+            RemoveTable(repository, tableType);
+            createdTables.Add(tableType);
+            if (keys == null)
+                keys = new Dictionary<string, Tuple<string, ForeignKey>>();
+
+            List<string> sqlList = new List<string>();
             try
             {
-                var props = DeepCloner.GetFastDeepClonerProperties(typeof(T));
-                var tableName = typeof(T).GetCustomAttribute<Table>()?.Name ?? typeof(T).Name;
-                var sql = new StringBuilder("CREATE TABLE [dbo].[" + tableName + "](");
+                var isSqllite = repository.GetDataBaseType() == DataBaseTypes.Sqllight;
+                var props = DeepCloner.GetFastDeepClonerProperties(tableType);
+                var tableName = tableType.GetCustomAttribute<Table>()?.Name ?? tableType.Name;
+                var sql = new StringBuilder("CREATE TABLE " + (!isSqllite ? "[dbo]." : "") + "[" + tableName + "](");
                 var isPrimaryKey = "";
-                foreach (var prop in props.Where(x => x.PropertyType.GetDbTypeByType() != null && !x.ContainAttribute<ExcludeFromAbstract>()).GroupBy(x=> x.Name).Select(x=> x.First()))
+                foreach (var prop in props.Where(x => x.PropertyType.GetDbTypeByType() != null && !x.ContainAttribute<ExcludeFromAbstract>() && x.IsInternalType).GroupBy(x => x.Name).Select(x => x.First()))
                 {
+
                     isPrimaryKey = prop.ContainAttribute<PrimaryKey>() ? prop.GetPropertyName() : isPrimaryKey;
+                    var forgenKey = prop.GetCustomAttribute<ForeignKey>();
                     var dbType = prop.PropertyType.GetDbTypeByType();
                     var propName = prop.GetPropertyName();
                     sql.Append(propName + " ");
-                    sql.Append(dbType + " ");
+                    if (!prop.ContainAttribute<PrimaryKey>() || !isSqllite)
+                        sql.Append(dbType + " ");
+
+                    if (forgenKey != null)
+                        sqlList.Add(CreateTable(repository, forgenKey.Type, createdTables, false, force, keys));
+
                     if (prop.ContainAttribute<PrimaryKey>())
                     {
-                        sql.Append("IDENTITY(1,1) NOT NULL,");
+                        if (!isSqllite)
+                            sql.Append("IDENTITY(1,1) NOT NULL,");
+                        else sql.Append(" Integer PRIMARY KEY AUTOINCREMENT,");
                         continue;
+                    }
+                    if (forgenKey != null)
+                    {
+                        keys.Add(propName, new Tuple<string, ForeignKey>(tableName, forgenKey));
                     }
 
                     sql.Append(Nullable.GetUnderlyingType(prop.PropertyType) != null ? " NULL," : " NOT NULL,");
                 }
 
-                if (!string.IsNullOrEmpty(isPrimaryKey))
+                if (keys.Any() && isSqllite)
                 {
-                    sql.Append(" CONSTRAINT [PK_"+tableName+"] PRIMARY KEY CLUSTERED");
+                    foreach (var key in keys)
+                    {
+                        var type = key.Value.Item2.Type.GetActualType();
+                        var keyPrimary = type.GetPrimaryKey().GetPropertyName();
+                        var tb = type.GetCustomAttribute<Table>().Name ?? type.Name;
+                        if (isSqllite)
+                            sql.Append("FOREIGN KEY(" + key.Key + ") REFERENCES " + tb + "(" + keyPrimary + "),");
+
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(isPrimaryKey) && !isSqllite)
+                {
+                    sql.Append(" CONSTRAINT [PK_" + tableName + "] PRIMARY KEY CLUSTERED");
                     sql.Append(" ([" + isPrimaryKey + "] ASC");
                     sql.Append(")");
                     sql.Append(
                         "WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]");
                     sql.Append(") ON [PRIMARY]");
                 }
-                else sql.Append(")");
-                var cmd = repository.GetSqlCommand(sql.ToString());
-                repository.ExecuteNonQuery(cmd);
+                else
+                {
+                    if (isSqllite)
+                        sql = new StringBuilder(sql.ToString().TrimEnd(','));
+                    sql.Append(")");
+                }
+
+                if (!commit)
+                    return sql.ToString();
+
+                foreach (var prop in props.Where(x => !x.IsInternalType && !x.ContainAttribute<ExcludeFromAbstract>()).GroupBy(x => x.Name).Select(x => x.First()))
+                {
+                    var type = prop.PropertyType.GetActualType();
+                    sqlList.Add(CreateTable(repository, type, createdTables, false, force, keys));
+                }
+
+
+
+                sqlList.Insert(0, sql.ToString());
+                sqlList.RemoveAll(x => string.IsNullOrEmpty(x));
+
+                for (var i = sqlList.Count - 1; i >= 0; i--)
+                {
+                    var s = sqlList[i];
+                    var cmd = repository.GetSqlCommand(s);
+                    repository.ExecuteNonQuery(cmd);
+                }
+                sql = new StringBuilder();
+
+                if (keys.Any() && !isSqllite)
+                {
+                    foreach (var key in keys)
+                    {
+                        var type = key.Value.Item2.Type.GetActualType();
+                        var keyPrimary = type.GetPrimaryKey().GetPropertyName();
+                        var tb = type.GetCustomAttribute<Table>().Name ?? type.Name;
+                        sql.Append("ALTER TABLE " + key.Value.Item1 + " ADD FOREIGN KEY (" + key.Key + ") REFERENCES " + tb + "(" + keyPrimary + ");");
+
+                    }
+                    var s = sql.ToString();
+                    var cmd = repository.GetSqlCommand(s);
+                    repository.ExecuteNonQuery(cmd);
+
+                }
                 repository.Commit();
             }
             catch (Exception ex)
@@ -343,6 +481,7 @@ namespace Generic.LightDataTable.Helper
                 repository.Rollback();
                 throw ex;
             }
+            return string.Empty;
 
         }
 
@@ -356,7 +495,7 @@ namespace Generic.LightDataTable.Helper
             var primaryKeyValue = MethodHelper.ConvertValue<long>(primaryKey.GetValue(o));
             if (primaryKeyValue <= 0)
                 return new List<string>();
-            var sql = new List<string>() { "DELETE " + table + Querys.Where.Column(primaryKey.GetPropertyName()).Equal(primaryKeyValue).Execute() };
+            var sql = new List<string>() { "DELETE " + table + Querys.Where(repository.GetDataBaseType() == DataBaseTypes.Sqllight).Column(primaryKey.GetPropertyName()).Equal(primaryKeyValue).Execute() };
 
             foreach (var prop in props.Where(x => !x.IsInternalType && x.GetCustomAttribute<IndependentData>() == null && x.GetCustomAttribute<ExcludeFromAbstract>() == null))
             {

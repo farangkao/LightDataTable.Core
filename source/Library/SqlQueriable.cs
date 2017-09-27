@@ -109,6 +109,7 @@ namespace Generic.LightDataTable.Library
                 return this.ToList<T>();
             else
             {
+                _expression.IsSqlLight = _repository.GetDataBaseType() == Helper.DataBaseTypes.Sqllight;
                 foreach (var exp in _matches)
                     _expression.Translate(exp);
 

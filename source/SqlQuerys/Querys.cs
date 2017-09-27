@@ -19,30 +19,28 @@ namespace Generic.LightDataTable.SqlQuerys
 
         }
 
-        public static QueryWhere Select<T>()
+        public static QueryWhere Select<T>(bool isSqllite)
         {
             var type = MethodHelper.GetActualType(typeof(T));
-            return new QueryWhere("Select * from " + (type.GetCustomAttribute<Table>()?.Name ?? typeof(T).Name) + " ");
+            return new QueryWhere("Select * from " + (type.GetCustomAttribute<Table>()?.Name ?? typeof(T).Name) + " ", isSqllite);
         }
 
-        public static QueryWhere Select(Type type)
+        public static QueryWhere Select(Type type, bool isSqllite)
         {
             type = MethodHelper.GetActualType(type);
-            return new QueryWhere("Select * from " + (type.GetCustomAttribute<Table>()?.Name ?? type.Name) + " ");
+            return new QueryWhere("Select * from " + (type.GetCustomAttribute<Table>()?.Name ?? type.Name) + " ", isSqllite);
         }
 
-        public static QueryWhere Select(string tableName)
+        public static QueryWhere Select(string tableName , bool isSqllite)
         {
-            return new QueryWhere("Select * from " + tableName + " ");
+            return new QueryWhere("Select * from " + tableName + " ", isSqllite);
         }
 
-        public static QueryItem Where
+        public static QueryItem Where(bool isSqllite = false)
         {
-            get
-            {
-                var item = new QueryItem(" Where ");
+                var item = new QueryItem(" Where ", isSqllite);
                 return item;
-            }
+ 
         }
     }
 
@@ -52,11 +50,14 @@ namespace Generic.LightDataTable.SqlQuerys
     {
         private readonly string _sql;
 
-        public QueryWhere(string sql)
+        private bool IsSqllite { get; set; }
+
+        public QueryWhere(string sql, bool isSqllite = false)
         {
             _sql = sql;
+            IsSqllite = isSqllite;
         }
-        public QueryItem Where => new QueryItem(_sql + " Where ");
+        public QueryItem Where => new QueryItem(_sql + " Where ", IsSqllite);
 
         public string Execute()
         {
@@ -67,9 +68,11 @@ namespace Generic.LightDataTable.SqlQuerys
     public sealed class QueryItem
     {
         private string _sql;
-        public QueryItem(string sql)
+        private bool IsSqllite { get; set; }
+        public QueryItem(string sql, bool isSqllite)
         {
             _sql = sql;
+            IsSqllite = isSqllite;
         }
 
         public bool HasValue()
@@ -80,7 +83,7 @@ namespace Generic.LightDataTable.SqlQuerys
         public QueryConditions Column(string columnName)
         {
             _sql = _sql + " " + columnName;
-            return new QueryConditions(_sql);
+            return new QueryConditions(_sql, IsSqllite);
         }
 
         public QueryConditions Column<T>(string columnName)
@@ -90,32 +93,33 @@ namespace Generic.LightDataTable.SqlQuerys
                 col = col.Remove(col.ToLower().IndexOf(" as ", StringComparison.Ordinal));
             var type = typeof(T);
             if (type == typeof(decimal) || type == typeof(double) || type == typeof(float))
-                _sql += " " + "CONVERT(decimal(18,5)," + col + ") ";
+                _sql += !IsSqllite ? " " + "CONVERT(decimal(18,5)," + col + ") " : " Cast(" + col + " AS decimal(18,5)) ";
             else if (type == typeof(int) || type == typeof(long))
-                _sql += " " + "CONVERT(bigint," + col + ") ";
-            else _sql += " " + "CONVERT(nvarchar(max)," + col + ") ";
-            return new QueryConditions(_sql);
+                _sql += !IsSqllite ? " " + "CONVERT(decimal(18,5)," + col + ") " : " Cast(" + col + " AS bigint) ";
+            else _sql += !IsSqllite ? " " + "CONVERT(decimal(18,5)," + col + ") " : " Cast(" + col + " AS nvarchar(4000)) ";
+
+            return new QueryConditions(_sql, IsSqllite);
         }
 
         public QueryConditions Column<T, P>(Expression<Func<T, P>> action) where T : class
         {
             var member = action.Body is UnaryExpression ? ((MemberExpression)((UnaryExpression)action.Body).Operand) : (action.Body is MethodCallExpression ? ((MemberExpression)((MethodCallExpression)action.Body).Object) : (MemberExpression)action.Body);
-            if (member == null) return new QueryConditions(_sql);
+            if (member == null) return new QueryConditions(_sql, IsSqllite);
             var key = member.Member.Name;
             var type = typeof(P);
             var col = key;
             if (col.ToLower().Contains(" as "))
                 col = col.Remove(col.ToLower().IndexOf(" as ", StringComparison.Ordinal));
             if (type == typeof(decimal) || type == typeof(double) || type == typeof(float))
-                _sql += " " + "CONVERT(decimal(18,5)," + col + ") ";
+                _sql += !IsSqllite ? " " + "CONVERT(decimal(18,5)," + col + ") " : " Cast(" + col + " AS decimal(18,5)) ";
             else if (type == typeof(int) || type == typeof(long))
-                _sql += " " + "CONVERT(bigint," + col + ") ";
-            else _sql += " " + "CONVERT(nvarchar(max)," + col + ") ";
-            return new QueryConditions(_sql);
+                _sql += !IsSqllite ? " " + "CONVERT(decimal(18,5)," + col + ") " : " Cast(" + col + " AS bigint) ";
+            else _sql += !IsSqllite ? " " + "CONVERT(decimal(18,5)," + col + ") " : " Cast(" + col + " AS nvarchar(4000)) ";
+            return new QueryConditions(_sql, IsSqllite);
         }
 
 
-        public QueryConditions ToQueryConditions => new QueryConditions(_sql);
+        public QueryConditions ToQueryConditions => new QueryConditions(_sql, IsSqllite);
 
         public string Execute()
         {
@@ -127,19 +131,21 @@ namespace Generic.LightDataTable.SqlQuerys
     {
 
         private string _sql;
-        public QueryConditions(string sql)
+        private bool IsSqllite { get; set; }
+        public QueryConditions(string sql, bool isSqllite)
         {
             _sql = sql;
+            IsSqllite = isSqllite;
         }
 
-        public QueryItem ToQueryItem => new QueryItem(_sql);
+        public QueryItem ToQueryItem => new QueryItem(_sql, IsSqllite);
 
         public QueryItem And
         {
             get
             {
                 _sql += " AND";
-                return new QueryItem(_sql);
+                return new QueryItem(_sql, IsSqllite);
             }
         }
 
@@ -148,14 +154,14 @@ namespace Generic.LightDataTable.SqlQuerys
             get
             {
                 _sql += " OR";
-                return new QueryItem(_sql);
+                return new QueryItem(_sql, IsSqllite);
             }
         }
 
         public QueryConditions Comment(string text)
         {
             _sql += string.Format("\n--{0}--\n", text);
-            return new QueryConditions(_sql);
+            return new QueryConditions(_sql, IsSqllite);
         }
 
         public QueryConditions Like(string value, bool isColumn = false)
@@ -163,7 +169,7 @@ namespace Generic.LightDataTable.SqlQuerys
             if (!isColumn)
                 _sql += string.Format(" like '%{0}%'", value);
             else _sql += string.Format(" like '%'+{0}+'%'", value);
-            return new QueryConditions(_sql);
+            return new QueryConditions(_sql, IsSqllite);
         }
 
         public QueryConditions BeginWith(string value, bool isColumn = false)
@@ -171,7 +177,7 @@ namespace Generic.LightDataTable.SqlQuerys
             if (!isColumn)
                 _sql += string.Format(" like '{0}%'", value);
             else _sql += string.Format(" like {0}+'%'", value);
-            return new QueryConditions(_sql);
+            return new QueryConditions(_sql, IsSqllite);
         }
 
 
@@ -180,7 +186,7 @@ namespace Generic.LightDataTable.SqlQuerys
             if (!isColumn)
                 _sql += string.Format(" like '%{0}'", value);
             else _sql += string.Format(" like '%'+{0}", value);
-            return new QueryConditions(_sql);
+            return new QueryConditions(_sql, IsSqllite);
         }
 
         public QueryConditions Equal(object value, bool isColumn = false)
@@ -189,7 +195,7 @@ namespace Generic.LightDataTable.SqlQuerys
                 _sql += string.Format(" = {0}", Querys.GetValueByType(value));
             else
                 _sql += string.Format(" = {0}", value);
-            return new QueryConditions(_sql);
+            return new QueryConditions(_sql, IsSqllite);
         }
 
         public QueryConditions NotEqual(object value, bool isColumn = false)
@@ -197,7 +203,7 @@ namespace Generic.LightDataTable.SqlQuerys
             if (!isColumn)
                 _sql += string.Format(" != {0}", Querys.GetValueByType(value));
             else _sql += string.Format(" != {0}", value);
-            return new QueryConditions(_sql);
+            return new QueryConditions(_sql, IsSqllite);
         }
 
         public QueryConditions GreaterThan(object value, bool isColumn = false)
@@ -205,7 +211,7 @@ namespace Generic.LightDataTable.SqlQuerys
             if (!isColumn)
                 _sql += string.Format(" > {0}", Querys.GetValueByType(value));
             else _sql += string.Format(" > {0}", value);
-            return new QueryConditions(_sql);
+            return new QueryConditions(_sql, IsSqllite);
         }
 
         public QueryConditions SmallerThan(object value, bool isColumn = false)
@@ -213,7 +219,7 @@ namespace Generic.LightDataTable.SqlQuerys
             if (!isColumn)
                 _sql += string.Format(" < {0}", Querys.GetValueByType(value));
             else _sql += string.Format(" < {0}", value);
-            return new QueryConditions(_sql);
+            return new QueryConditions(_sql, IsSqllite);
         }
 
         public QueryConditions IsNull
@@ -221,7 +227,7 @@ namespace Generic.LightDataTable.SqlQuerys
             get
             {
                 _sql += " is null";
-                return new QueryConditions(_sql);
+                return new QueryConditions(_sql, IsSqllite);
             }
         }
 
@@ -230,7 +236,7 @@ namespace Generic.LightDataTable.SqlQuerys
             get
             {
                 _sql += " is not null";
-                return new QueryConditions(_sql);
+                return new QueryConditions(_sql, IsSqllite);
             }
         }
 
@@ -239,7 +245,7 @@ namespace Generic.LightDataTable.SqlQuerys
             get
             {
                 _sql += "(";
-                return new QueryItem(_sql);
+                return new QueryItem(_sql, IsSqllite);
             }
         }
 
@@ -248,7 +254,7 @@ namespace Generic.LightDataTable.SqlQuerys
             get
             {
                 _sql += ")";
-                return new QueryItem(_sql);
+                return new QueryItem(_sql, IsSqllite);
             }
         }
 

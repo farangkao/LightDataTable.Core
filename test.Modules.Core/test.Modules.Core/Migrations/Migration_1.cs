@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Text;
 using Generic.LightDataTable.InterFace;
 using Generic.LightDataTable.Library;
+using Generic.LightDataTable;
+using Test.Modules.Core;
 
 namespace test.Modules.Core.Migrations
 {
@@ -14,8 +16,18 @@ namespace test.Modules.Core.Migrations
         }
         public override void ExecuteMigration(ICustomRepository repository)
         {
-            // here do you migration
-          //  var cmd = repository.GetSqlCommand("");
+
+            repository.CreateTable<User>(true); // create the table User, Role, Address 
+
+            var user = new User()
+            {
+                Role = new Role() { Name = "Admin" },
+                Address = new List<Address>() { new Address() { AddressName = "test" } },
+                UserName = "Alen Toma",
+                Password = "test"
+            };
+            repository.Save(user);
+
             base.ExecuteMigration(repository);
         }
     }

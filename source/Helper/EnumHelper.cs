@@ -9,7 +9,11 @@ namespace Generic.LightDataTable.Helper
         Changed // this is mostly used in IDbRuleTrigger AfterSave incase we want to reupdate the record
     }
 
-
+    public enum DataBaseTypes
+    {
+        Mssql,
+        Sqllight
+    }
 
     public enum RoundingConvention
     {
