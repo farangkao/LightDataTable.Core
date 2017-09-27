@@ -3,8 +3,11 @@
 https://www.nuget.org/packages/Generic.LightDataTable/
 ## .NET FRAMEWORK SUPPORT 
 1- .NETCoreApp 2.0
+
 2- .NETFramework 4.5.1
+
 3- .NETFramework 4.6
+
 4- .NETFramework 4.6.1
 ## What is LightDataTable
 LightDataTable is an object-relation mappar that enable .NET developers to work with relations data using objects.
