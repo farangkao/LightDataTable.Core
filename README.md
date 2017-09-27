@@ -207,8 +207,9 @@ will do a very painful quarry and se how it gets parsed.
 ```
 
 ## Migration
+LightDataTable has its on way Migration methods, so lets se down here how it work.
 ```
-//Create Class and call it IniMigration and inhert from Migration
+   //Create Class and call it IniMigration and inhert from Migration
    public class IniMigration : Migration
         public IniMigration()
         {
