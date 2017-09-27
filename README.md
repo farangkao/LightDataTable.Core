@@ -193,8 +193,6 @@ will do a very painful quarry and se how it gets parsed.
              OFFSET 20
              ROWS FETCH NEXT 100 ROWS ONLY;
 ```
-## Limitations
-LightDataTable have only support to Mssql Db right now. Im working on developing support to litesql so you could use it on mobile to.
 
 ## Issues
 This project is under developing and it's not in its final state so please report any bugs or improvement you might find
