@@ -52,14 +52,6 @@ namespace Generic.LightDataTable.Transaction
         {
             if (_assLoaded)
                 return;
-            //// ok Lets load sqlLight
-            //var outPutDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().CodeBase);
-            //var path = Path.Combine(outPutDirectory, @"ExternalDLL\System.Data.SQLite.dll");
-            //while (!File.Exists(path))
-            //    path = Path.Combine(string.Join("\\", outPutDirectory.Split('\\').Reverse().Take(outPutDirectory.Split('\\').Length -1).Reverse()), @"ExternalDLL\System.Data.SQLite.dll");
-
-            //var DLL = Assembly.LoadFile(path);
-
 
             const string assemblyName = "ProcessedByFody";
             if (!Assembly.GetEntryAssembly().DefinedTypes.Any(a => a.Name.Contains(assemblyName)))
@@ -148,14 +140,10 @@ namespace Generic.LightDataTable.Transaction
         public DbTransaction CreateTransaction()
         {
             ValidateConnection();
-#if NET461 || NET451 || NET46 || NETCOREAPP2_0
             if (Trans?.Connection == null)
-            {
                 Trans = SqlConnection.BeginTransaction();
-            }
 
             return Trans;
-#endif
         }
 
 
@@ -321,14 +309,6 @@ namespace Generic.LightDataTable.Transaction
             var sqlDbTypeValue = value ?? DBNull.Value;
             (cmd as SqliteCommand).Parameters.AddWithValue(attrName, value);
 #endif
-            //var param = new System.Data.SQLite.SQLiteParameter
-            //{
-            //    SqlDbType = dbType,
-            //    DbType
-            //    Value = sqlDbTypeValue,
-            //    ParameterName = attrName
-            //};
-            //cmd.Parameters.Add(param);
         }
 
         /// <summary>
