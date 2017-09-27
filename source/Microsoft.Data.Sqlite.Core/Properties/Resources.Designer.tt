@@ -1,4 +1,0 @@
-<#
-    Session["ResourceFile"] = "Resources.resx";
-#>
-<#@ include file="..\..\..\tools\Resources.tt" #>
