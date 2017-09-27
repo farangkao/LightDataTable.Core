@@ -9,7 +9,12 @@ using System.Reflection;
 using Generic.LightDataTable.Interface;
 using Generic.LightDataTable.InterFace;
 using Generic.LightDataTable.Library;
-//using System.Data.SQLite;
+#if NET461 || NET451 || NET46 
+using System.Data.SQLite;
+#elif NETCOREAPP2_0
+using Microsoft.Data.Sqlite;
+#endif
+
 
 namespace Generic.LightDataTable.Transaction
 {
@@ -24,8 +29,13 @@ namespace Generic.LightDataTable.Transaction
         /// <summary>
         /// Created sqlConnection
         /// </summary>
-        protected System.Data.SQLite.SQLiteConnection SqlConnection { get; private set; }
-        internal System.Data.SQLite.SQLiteTransaction Trans { get; private set; }
+#if NET461 || NET451 || NET46
+        protected SQLiteConnection SqlConnection { get; private set; }
+        internal SQLiteTransaction Trans { get; private set; }
+#elif NETCOREAPP2_0
+        protected SqliteConnection SqlConnection { get; private set; }
+        internal SqliteTransaction Trans { get; private set; }
+#endif
         private static bool _assLoaded;
         private static bool _tableMigrationCheck;
         private static IList<Migration> Migrations { get; set; }
@@ -119,8 +129,13 @@ namespace Generic.LightDataTable.Transaction
 
         private void ValidateConnection()
         {
+#if NET461 || NET451 || NET46
+             if (SqlConnection == null)
+                SqlConnection = new SQLiteConnection(SqlConnectionStringString);
+#elif NETCOREAPP2_0
             if (SqlConnection == null)
-                SqlConnection = new System.Data.SQLite.SQLiteConnection(SqlConnectionStringString);
+                SqlConnection = new SqliteConnection(SqlConnectionStringString);
+#endif
             if (SqlConnection.State == ConnectionState.Broken || SqlConnection.State == ConnectionState.Closed)
                 SqlConnection.Open();
         }
@@ -133,11 +148,14 @@ namespace Generic.LightDataTable.Transaction
         public DbTransaction CreateTransaction()
         {
             ValidateConnection();
+#if NET461 || NET451 || NET46 || NETCOREAPP2_0
             if (Trans?.Connection == null)
             {
                 Trans = SqlConnection.BeginTransaction();
             }
+
             return Trans;
+#endif
         }
 
 
@@ -178,7 +196,6 @@ namespace Generic.LightDataTable.Transaction
         {
             Trans?.Rollback();
             Dispose();
-
         }
 
         /// <summary>
@@ -233,7 +250,7 @@ namespace Generic.LightDataTable.Transaction
                     }
                     catch (Exception e)
                     {
-                        
+
                     }
                     if (dbMigration.Any())
                         continue;
@@ -297,8 +314,13 @@ namespace Generic.LightDataTable.Transaction
             if (attrName != null && attrName[0] != '@')
                 attrName = "@" + attrName;
 
+#if NET461 || NET451 || NET46
+           var sqlDbTypeValue = value ?? DBNull.Value;
+            (cmd as SQLiteCommand).Parameters.AddWithValue(attrName, value);
+#elif NETCOREAPP2_0
             var sqlDbTypeValue = value ?? DBNull.Value;
-            (cmd as System.Data.SQLite.SQLiteCommand).Parameters.AddWithValue(attrName, value);
+            (cmd as SqliteCommand).Parameters.AddWithValue(attrName, value);
+#endif
             //var param = new System.Data.SQLite.SQLiteParameter
             //{
             //    SqlDbType = dbType,

@@ -14,7 +14,11 @@ using System.Data.Common;
 using System.Text.RegularExpressions;
 using System.Data;
 using System.Data.SqlClient;
+#if NET461 || NET451 || NET46 
 using System.Data.SQLite;
+#elif NETCOREAPP2_0
+using Microsoft.Data.Sqlite;
+#endif
 
 namespace Generic.LightDataTable
 {
@@ -66,12 +70,23 @@ namespace Generic.LightDataTable
                 i++;
             }
 
-            DbCommand cmd;
+            DbCommand cmd = null;
+#if NET461 || NET451 || NET46
             if (repository.GetDataBaseType() == Helper.DataBaseTypes.Mssql)
                 cmd = tran != null ? new SqlCommand(sql, connection as SqlConnection, tran as SqlTransaction) : new SqlCommand(sql, connection as SqlConnection);
             else cmd = tran == null ? new SQLiteCommand(sql, connection as SQLiteConnection) : new SQLiteCommand(sql, connection as SQLiteConnection, tran as SQLiteTransaction);
             foreach (var dic in dicCols)
                 repository.AddInnerParameter(cmd, dic.Key, dic.Value.Item1, dic.Value.Item2);
+            return cmd;
+#elif NETCOREAPP2_0
+            if (repository.GetDataBaseType() == Helper.DataBaseTypes.Mssql)
+                cmd = tran != null ? new SqlCommand(sql, connection as SqlConnection, tran as SqlTransaction) : new SqlCommand(sql, connection as SqlConnection);
+            else cmd = tran == null ? new SqliteCommand(sql, connection as SqliteConnection) : new SqliteCommand(sql, connection as SqliteConnection, tran as SqliteTransaction);
+            foreach (var dic in dicCols)
+                repository.AddInnerParameter(cmd, dic.Key, dic.Value.Item1, dic.Value.Item2);
+            return cmd;
+
+#endif
             return cmd;
         }
 

@@ -334,7 +334,7 @@ namespace Generic.LightDataTable.Helper
             var c = tableRemoved.Count;
             while (c > 0)
             {
-                
+
                 for (var i = tableRemoved.Count - 1; i >= 0; i--)
                 {
                     try
@@ -415,10 +415,10 @@ namespace Generic.LightDataTable.Helper
                         var type = key.Value.Item2.Type.GetActualType();
                         var keyPrimary = type.GetPrimaryKey().GetPropertyName();
                         var tb = type.GetCustomAttribute<Table>().Name ?? type.Name;
-                        if (isSqllite)
-                            sql.Append("FOREIGN KEY(" + key.Key + ") REFERENCES " + tb + "(" + keyPrimary + "),");
+                        sql.Append("FOREIGN KEY(" + key.Key + ") REFERENCES " + tb + "(" + keyPrimary + "),");
 
                     }
+                    keys.Clear();
                 }
 
                 if (!string.IsNullOrEmpty(isPrimaryKey) && !isSqllite)
@@ -450,12 +450,23 @@ namespace Generic.LightDataTable.Helper
 
                 sqlList.Insert(0, sql.ToString());
                 sqlList.RemoveAll(x => string.IsNullOrEmpty(x));
-
-                for (var i = sqlList.Count - 1; i >= 0; i--)
+                var c = sqlList.Count;
+                while (c > 0)
                 {
-                    var s = sqlList[i];
-                    var cmd = repository.GetSqlCommand(s);
-                    repository.ExecuteNonQuery(cmd);
+                    for (var i = sqlList.Count - 1; i >= 0; i--)
+                    {
+                        try
+                        {
+                            var s = sqlList[i];
+                            var cmd = repository.GetSqlCommand(s);
+                            repository.ExecuteNonQuery(cmd);
+                            c--;
+                        }
+                        catch (Exception ex)
+                        {
+                            var test = ex;
+                        }
+                    }
                 }
                 sql = new StringBuilder();
 
