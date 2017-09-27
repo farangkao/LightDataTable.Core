@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26730.16
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Generic.LightDataTable", "..\source\Generic.LightDataTable.csproj", "{5612AE99-4581-4AF0-ABE3-1CB4A88770C2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Generic.LightDataTable", "..\source\LightDataTable.Core\Generic.LightDataTable.csproj", "{5612AE99-4581-4AF0-ABE3-1CB4A88770C2}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FastDeepCloner", "..\..\FastDeepCloner\FastDeepCloner-New-\FastDeepCloner.csproj", "{A1A54EFE-FC64-4E5C-B2FC-76476D222F21}"
 EndProject
