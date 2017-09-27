@@ -25,7 +25,7 @@ let's start by creating the dbContext, lets call it Repository
 ```
     // Here we inherit from Transaction Data which contains the database logic for handling the transaction.
     // well thats all we need right now.
-    // Inhert from TransactionLiteData for SQLITEDATABASE OR TransactionData FOR MSSQL 
+    // Inhert from TransactionLiteData for SQLite OR TransactionData FOR MSSQL 
     public class Repository : TransactionData
     {
         /// <param name="appSettingsOrSqlConnectionString">
