@@ -196,12 +196,14 @@ will do a very painful quarry and se how it gets parsed.
             // And here is the generated Sql Quarry
              SELECT distinct Users.* FROM Users 
              left join [Roles] CEjB on CEjB.[Id] = Users.[Role_Id]
-             WHERE (([CEjB].[Name] like '%SuperAdmin' AND [Users].[UserName] like '%alen%') OR  EXISTS (SELECT 1 FROM [Address] 
+             WHERE (([CEjB].[Name] like String[%SuperAdmin] AND [Users].[UserName] like String[%alen%]) 
+             OR  EXISTS (SELECT 1 FROM [Address] 
              INNER JOIN [Address] MJRhcYK on Users.[Id] = MJRhcYK.[User_Id]
-             WHERE (([Address].[AddressName] like 'st%' OR [Address].[AddressName] like '%mt%') AND ([Address].[Id] > 0))))
+             WHERE (([Address].[AddressName] like String[st%] OR [Address].[AddressName] like String[%mt%]) AND ([Address].[Id] > 0))))
              ORDER BY Id
              OFFSET 20
              ROWS FETCH NEXT 100 ROWS ONLY;
+             // All String[] and Date[] will be translated to Parameters later on.   
 ```
 
 ## Migration
