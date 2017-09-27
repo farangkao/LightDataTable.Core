@@ -1,6 +1,14 @@
 # Introduction to LightDataTable.Core
 ## Nuget
 https://www.nuget.org/packages/Generic.LightDataTable/
+## .NET FRAMEWORK SUPPORT 
+1- .NETCoreApp 2.0
+
+2- .NETFramework 4.5.1
+
+3- .NETFramework 4.6
+
+4- .NETFramework 4.6.1
 ## What is LightDataTable
 LightDataTable is an object-relation mappar that enable .NET developers to work with relations data using objects.
 LightDataTable is an alternative to entityframwork. is more flexible and much faster than entity framework.
@@ -17,6 +25,7 @@ let's start by creating the dbContext, lets call it Repository
 ```
     // Here we inherit from Transaction Data which contains the database logic for handling the transaction.
     // well thats all we need right now.
+    // Inhert from TransactionLiteData for SQLite OR TransactionData FOR MSSQL 
     public class Repository : TransactionData
     {
         /// <param name="appSettingsOrSqlConnectionString">
@@ -24,9 +33,13 @@ let's start by creating the dbContext, lets call it Repository
         /// OR ConnectionStringName,
         /// OR Full ConnectionString
         /// Default is Dbconnection
+        // <enableMigration> se Migration section for more information
+        // when enabled it will create a table Generic_LightDataTable_DBMigration so it keep an 
+        // eye on all exected Migrations
+        // </enableMigration>
         /// </param>
-        public Repository(string appSettingsOrSqlConnectionString = "Dbconnection") :
-        base(appSettingsOrSqlConnectionString)
+        public Repository(string appSettingsOrSqlConnectionString = "Dbconnection", bool enableMigration = false) :
+        base(appSettingsOrSqlConnectionString,enableMigration)
         {
         }
 
@@ -186,13 +199,68 @@ will do a very painful quarry and se how it gets parsed.
             // And here is the generated Sql Quarry
              SELECT distinct Users.* FROM Users 
              left join [Roles] CEjB on CEjB.[Id] = Users.[Role_Id]
-             WHERE (([CEjB].[Name] like '%SuperAdmin' AND [Users].[UserName] like '%alen%') OR  EXISTS (SELECT 1 FROM [Address] 
+             WHERE (([CEjB].[Name] like String[%SuperAdmin] AND [Users].[UserName] like String[%alen%]) 
+             OR  EXISTS (SELECT 1 FROM [Address] 
              INNER JOIN [Address] MJRhcYK on Users.[Id] = MJRhcYK.[User_Id]
-             WHERE (([Address].[AddressName] like 'st%' OR [Address].[AddressName] like '%mt%') AND ([Address].[Id] > 0))))
+             WHERE (([Address].[AddressName] like String[st%] OR [Address].[AddressName] like String[%mt%]) AND ([Address].[Id] > 0))))
              ORDER BY Id
              OFFSET 20
              ROWS FETCH NEXT 100 ROWS ONLY;
+             // All String[] and Date[] will be translated to Parameters later on.   
 ```
+
+## Migration
+LightDataTable has its own Migration methods, so lets se down here how it work.
+```
+   //Create Class and call it IniMigration and inhert from Migration
+   public class IniMigration : Migration
+        public IniMigration()
+        {
+           // in the database will be created a migration that contain this Identifier.
+           // it's very important that its unique.
+            MigrationIdentifier = "SystemFirstStart"; 
+        }
+        public override void ExecuteMigration(ICustomRepository repository)
+        {
+            // create the table User, Role, Address 
+            // because we have a forgenkeys in user class that refer to address and roles, those will also be
+            // created
+            repository.CreateTable<User>(true);
+            var user = new User()
+            {
+                Role = new Role() { Name = "Admin" },
+                Address = new List<Address>() { new Address() { AddressName = "test" } },
+                UserName = "Alen Toma",
+                Password = "test"
+            };
+            repository.Save(user);
+
+            base.ExecuteMigration(repository);
+        }
+    }
+  }
+
+    // now lets create the MigrationConfig Class
+    public class MigrationConfig : IMigrationConfig
+    {
+        /// <summary>
+        /// All available Migrations to be executed.
+        // when Migration Is eneabled in TransactionLiteData or TransactionData.
+        // this class will be triggered at system start.
+        /// </summary>
+        public IList<Migration> GetMigrations(ICustomRepository repository)
+        {
+            // return all migration that is to be executetd
+            // all already executed migration that do exist in the database will be ignored
+            return new List<Migration>(){new IniMigration()};
+        }
+    }
+
+```
+
+
+
+
 
 ## Issues
 This project is under developing and it's not in its final state so please report any bugs or improvement you might find
