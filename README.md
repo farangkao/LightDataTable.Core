@@ -25,9 +25,10 @@ let's start by creating the dbContext, lets call it Repository
         /// OR ConnectionStringName,
         /// OR Full ConnectionString
         /// Default is Dbconnection
+        // <enableMigration> se Migration section for more information</enableMigration>
         /// </param>
-        public Repository(string appSettingsOrSqlConnectionString = "Dbconnection") :
-        base(appSettingsOrSqlConnectionString)
+        public Repository(string appSettingsOrSqlConnectionString = "Dbconnection", bool enableMigration = false) :
+        base(appSettingsOrSqlConnectionString,enableMigration)
         {
         }
 
@@ -194,6 +195,58 @@ will do a very painful quarry and se how it gets parsed.
              OFFSET 20
              ROWS FETCH NEXT 100 ROWS ONLY;
 ```
+
+## Migration
+```
+//Create Class and call it IniMigration and inhert from Migration
+   public class IniMigration : Migration
+        public IniMigration()
+        {
+           // in the database will be created a migration that contain this Identifier.
+           // it's very important that its unique.
+            MigrationIdentifier = "SystemFirstStart"; 
+        }
+        public override void ExecuteMigration(ICustomRepository repository)
+        {
+            // create the table User, Role, Address 
+            // because we have a forgenkeys in user class that refer to address and roles, those will also be
+            // created
+            repository.CreateTable<User>(true);
+            var user = new User()
+            {
+                Role = new Role() { Name = "Admin" },
+                Address = new List<Address>() { new Address() { AddressName = "test" } },
+                UserName = "Alen Toma",
+                Password = "test"
+            };
+            repository.Save(user);
+
+            base.ExecuteMigration(repository);
+        }
+    }
+  }
+
+    // now lets create the MigrationConfig Class
+    public class MigrationConfig : IMigrationConfig
+    {
+        /// <summary>
+        /// All available Migrations to be executed.
+        // when Migration Is eneabled in TransactionLiteData or TransactionData.
+        // this class will be triggered at system start.
+        /// </summary>
+        public IList<Migration> GetMigrations(ICustomRepository repository)
+        {
+            // return all migration that is to be executetd
+            // all already executed migration that do exist in the database will be ignored
+            return new List<Migration>(){new IniMigration()};
+        }
+    }
+
+```
+
+
+
+
 
 ## Issues
 This project is under developing and it's not in its final state so please report any bugs or improvement you might find
