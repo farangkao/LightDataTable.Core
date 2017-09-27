@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\source\Generic.LightDataTable.csproj" />
+    <ProjectReference Include="..\..\source\LightDataTable.Core\Generic.LightDataTable.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -20,7 +20,6 @@ namespace Generic.LightDataTable
 {
     public static class Extension
     {
-
         public static T FromJson<T>(this string jsonData) where T : class
         {
             return JsonConvert.DeserializeObject<T>(jsonData);
@@ -165,17 +164,22 @@ namespace Generic.LightDataTable
 
         /// <summary>
         /// This will recreate the table and if it has a ForeignKey to other tables it will also recreate those table to
-        /// use wisly
+        /// use it wisely
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="repository"></param>
-        /// <param name="force"> Recreate th table</param>
+        /// <param name="force"> remove and recreate all</param>
 
         public static void CreateTable<T>(this ICustomRepository repository, bool force = false) where T : class, IDbEntity
         {
             DbSchema.CreateTable(repository, typeof(T), null, true, force);
         }
 
+        /// <summary>
+        /// This will remove the table and if it has a ForeignKey to other tables it will also remove those table to
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="repository"></param>
         public static void RemoveTable<T>(this ICustomRepository repository) where T : class, IDbEntity
         {
             DbSchema.RemoveTable(repository, typeof(T));

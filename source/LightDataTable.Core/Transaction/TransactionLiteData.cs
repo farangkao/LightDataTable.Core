@@ -6,11 +6,10 @@ using System.Data.Common;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Reflection;
-using Generic.LightDataTable.Helper;
 using Generic.LightDataTable.Interface;
 using Generic.LightDataTable.InterFace;
 using Generic.LightDataTable.Library;
-using System.Data.SQLite;
+//using System.Data.SQLite;
 
 namespace Generic.LightDataTable.Transaction
 {
@@ -25,8 +24,8 @@ namespace Generic.LightDataTable.Transaction
         /// <summary>
         /// Created sqlConnection
         /// </summary>
-        protected SQLiteConnection SqlConnection { get; private set; }
-        internal SQLiteTransaction Trans { get; private set; }
+        protected System.Data.SQLite.SQLiteConnection SqlConnection { get; private set; }
+        internal System.Data.SQLite.SQLiteTransaction Trans { get; private set; }
         private static bool _assLoaded;
         private static bool _tableMigrationCheck;
         private static IList<Migration> Migrations { get; set; }
@@ -121,7 +120,7 @@ namespace Generic.LightDataTable.Transaction
         private void ValidateConnection()
         {
             if (SqlConnection == null)
-                SqlConnection = new SQLiteConnection(SqlConnectionStringString);
+                SqlConnection = new System.Data.SQLite.SQLiteConnection(SqlConnectionStringString);
             if (SqlConnection.State == ConnectionState.Broken || SqlConnection.State == ConnectionState.Closed)
                 SqlConnection.Open();
         }
@@ -299,7 +298,7 @@ namespace Generic.LightDataTable.Transaction
                 attrName = "@" + attrName;
 
             var sqlDbTypeValue = value ?? DBNull.Value;
-            (cmd as SQLiteCommand).Parameters.AddWithValue(attrName, value);
+            (cmd as System.Data.SQLite.SQLiteCommand).Parameters.AddWithValue(attrName, value);
             //var param = new System.Data.SQLite.SQLiteParameter
             //{
             //    SqlDbType = dbType,
