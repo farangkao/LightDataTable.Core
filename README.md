@@ -33,7 +33,9 @@ let's start by creating the dbContext, lets call it Repository
         /// OR ConnectionStringName,
         /// OR Full ConnectionString
         /// Default is Dbconnection
-        // <enableMigration> se Migration section for more information</enableMigration>
+        // <enableMigration> se Migration section for more information
+        // when enabled it will create a table Generic_LightDataTable_DBMigration so it keep an eye on all exected Migrations
+        // </enableMigration>
         /// </param>
         public Repository(string appSettingsOrSqlConnectionString = "Dbconnection", bool enableMigration = false) :
         base(appSettingsOrSqlConnectionString,enableMigration)
