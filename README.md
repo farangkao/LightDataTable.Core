@@ -9,6 +9,8 @@ https://www.nuget.org/packages/Generic.LightDataTable/
 3- .NETFramework 4.6
 
 4- .NETFramework 4.6.1
+
+5- .NETStandard 2.0
 ## What is LightDataTable
 LightDataTable is an object-relation mappar that enable .NET developers to work with relations data using objects.
 LightDataTable is an alternative to entityframwork. is more flexible and much faster than entity framework.
