@@ -11,7 +11,7 @@ using Generic.LightDataTable.InterFace;
 using Generic.LightDataTable.Library;
 #if NET461 || NET451 || NET46 
 using System.Data.SQLite;
-#elif NETCOREAPP2_0
+#elif NETCOREAPP2_0 || NETSTANDARD2_0
 using Microsoft.Data.Sqlite;
 #endif
 
@@ -32,7 +32,7 @@ namespace Generic.LightDataTable.Transaction
 #if NET461 || NET451 || NET46
         protected SQLiteConnection SqlConnection { get; private set; }
         internal SQLiteTransaction Trans { get; private set; }
-#elif NETCOREAPP2_0
+#elif NETCOREAPP2_0 || NETSTANDARD2_0
         protected SqliteConnection SqlConnection { get; private set; }
         internal SqliteTransaction Trans { get; private set; }
 #endif
@@ -124,7 +124,7 @@ namespace Generic.LightDataTable.Transaction
 #if NET461 || NET451 || NET46
              if (SqlConnection == null)
                 SqlConnection = new SQLiteConnection(SqlConnectionStringString);
-#elif NETCOREAPP2_0
+#elif NETCOREAPP2_0 || NETSTANDARD2_0
             if (SqlConnection == null)
                 SqlConnection = new SqliteConnection(SqlConnectionStringString);
 #endif
@@ -305,7 +305,7 @@ namespace Generic.LightDataTable.Transaction
 #if NET461 || NET451 || NET46
            var sqlDbTypeValue = value ?? DBNull.Value;
             (cmd as SQLiteCommand).Parameters.AddWithValue(attrName, value);
-#elif NETCOREAPP2_0
+#elif NETCOREAPP2_0 || NETSTANDARD2_0
             var sqlDbTypeValue = value ?? DBNull.Value;
             (cmd as SqliteCommand).Parameters.AddWithValue(attrName, value);
 #endif

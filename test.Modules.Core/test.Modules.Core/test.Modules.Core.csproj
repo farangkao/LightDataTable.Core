@@ -16,11 +16,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Fody" Version="2.1.2" />
-    <PackageReference Include="PropertyChanged.Fody" Version="2.1.4" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\..\source\LightDataTable.Core\Generic.LightDataTable.csproj" />
   </ItemGroup>
 

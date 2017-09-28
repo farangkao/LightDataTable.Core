@@ -54,7 +54,6 @@ namespace Generic.LightDataTable.Library
             PropertyChanges.Add(e.PropertyName, e.PropertyName);
         }
 
-
         /// <summary>
         /// This Method is added in case we want JsonConverter to serialize only new data, 
         /// be sure to Clear PropertyChanges before beginning to change the data

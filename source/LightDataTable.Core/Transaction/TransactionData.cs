@@ -6,12 +6,9 @@ using System.Data.Common;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Reflection;
-using Generic.LightDataTable.Helper;
 using Generic.LightDataTable.Interface;
 using Generic.LightDataTable.InterFace;
 using Generic.LightDataTable.Library;
-using Generic.LightDataTable;
-
 
 namespace Generic.LightDataTable.Transaction
 {

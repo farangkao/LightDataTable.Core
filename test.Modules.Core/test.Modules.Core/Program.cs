@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Linq;
 using Generic.LightDataTable;
-using FastDeepCloner;
 using test.Modules.Core.Data;
+using Generic.LightDataTable.Helper;
 
 namespace Test.Modules.Core
 {
@@ -12,6 +12,7 @@ namespace Test.Modules.Core
 
         private static void Main(string[] args)
         {
+
             // lite database with migration cant use both in the same system so mssql or lite db
             using (var rep = new LiteRepository())
             {
