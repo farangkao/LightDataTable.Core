@@ -73,17 +73,19 @@ namespace Generic.LightDataTable.Transaction
 
             if (appSettingsOrSqlConnectionString.Contains(";"))
                 SqlConnectionStringString = appSettingsOrSqlConnectionString; // its full connectionString
-
-            // set connectionString by appsettings
-            if (!string.IsNullOrEmpty(ConfigurationManager.AppSettings[appSettingsOrSqlConnectionString]))
-            {
-                SqlConnectionStringString = ConfigurationManager
-                    .ConnectionStrings[ConfigurationManager.AppSettings[appSettingsOrSqlConnectionString]]
-                    .ConnectionString;
-            }
             else
             {
-                SqlConnectionStringString = ConfigurationManager.ConnectionStrings[appSettingsOrSqlConnectionString].ConnectionString;
+                // set connectionString by appsettings
+                if (!string.IsNullOrEmpty(ConfigurationManager.AppSettings[appSettingsOrSqlConnectionString]))
+                {
+                    SqlConnectionStringString = ConfigurationManager
+                        .ConnectionStrings[ConfigurationManager.AppSettings[appSettingsOrSqlConnectionString]]
+                        .ConnectionString;
+                }
+                else
+                {
+                    SqlConnectionStringString = ConfigurationManager.ConnectionStrings[appSettingsOrSqlConnectionString].ConnectionString;
+                }
             }
 
             if (!_tableMigrationCheck && EnableMigration)

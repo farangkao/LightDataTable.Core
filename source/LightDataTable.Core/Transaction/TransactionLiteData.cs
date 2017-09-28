@@ -90,20 +90,22 @@ namespace Generic.LightDataTable.Transaction
 
             if (appSettingsOrSqlConnectionString.Contains(";") || appSettingsOrSqlConnectionString.Contains(".sql"))
                 SqlConnectionStringString = appSettingsOrSqlConnectionString; // its full connectionString
-
-            // set connectionString by appsettings
-            if (!string.IsNullOrEmpty(ConfigurationManager.AppSettings[appSettingsOrSqlConnectionString]))
-            {
-                SqlConnectionStringString = ConfigurationManager
-                    .ConnectionStrings[ConfigurationManager.AppSettings[appSettingsOrSqlConnectionString]]
-                    .ConnectionString;
-            }
             else
             {
-                if (!(appSettingsOrSqlConnectionString.Contains(";") || appSettingsOrSqlConnectionString.Contains(".sql")))
-                    SqlConnectionStringString = ConfigurationManager.ConnectionStrings[appSettingsOrSqlConnectionString].ConnectionString;
-            }
 
+                // set connectionString by appsettings
+                if (!string.IsNullOrEmpty(ConfigurationManager.AppSettings[appSettingsOrSqlConnectionString]))
+                {
+                    SqlConnectionStringString = ConfigurationManager
+                        .ConnectionStrings[ConfigurationManager.AppSettings[appSettingsOrSqlConnectionString]]
+                        .ConnectionString;
+                }
+                else
+                {
+                    if (!appSettingsOrSqlConnectionString.Contains(".sql"))
+                        SqlConnectionStringString = ConfigurationManager.ConnectionStrings[appSettingsOrSqlConnectionString].ConnectionString;
+                }
+            }
             if (!_tableMigrationCheck && EnableMigration)
             {
                 this.CreateTable<DBMigration>(false);
