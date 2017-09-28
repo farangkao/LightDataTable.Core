@@ -44,7 +44,7 @@ namespace Generic.LightDataTable
         internal static DbCommand ProcessSql(this ICustomRepository repository, DbConnection connection, DbTransaction tran, string sql)
         {
             var stringExp = new Regex(@"String\[.+?\]");
-            var DateExp = new Regex(@"String\[.+?\]");
+            var DateExp = new Regex(@"Date\[.+?\]");
             var i = 0;
             var dicCols = new Dictionary<string, Tuple<object, SqlDbType>>();
             MatchCollection matches = null;
@@ -63,7 +63,7 @@ namespace Generic.LightDataTable
             {
                 Match exp = matches[0];
                 var col = "@CO" + i + "L";
-                object str = exp.Value.TrimEnd(']').Substring(@"String\[".Length - 1);
+                object str = exp.Value.TrimEnd(']').Substring(@"Date\[".Length - 1);
                 sql = sql.Remove(exp.Index, exp.Value.Length);
                 sql = sql.Insert(exp.Index, col);
                 dicCols.Add(col, new Tuple<object, SqlDbType>(str.ConvertValue<DateTime>(), SqlDbType.DateTime));
@@ -87,7 +87,6 @@ namespace Generic.LightDataTable
             return cmd;
 
 #endif
-            return cmd;
         }
 
         public static Attribute GetAttributeType<T>() where T : Attribute
@@ -246,7 +245,6 @@ namespace Generic.LightDataTable
         }
 
         // This method is added incase we want JsonConverter to serilize only new data, 
-        //4059EE have to use this method when before sending the data to Tellus.Rest.Api so it only send the data that we are intressted in.
         // be sure to ClearPropertChanges before beginning to change the data
         public static string CreateNewValuesFromObject(IDbEntity desireObject)
         {

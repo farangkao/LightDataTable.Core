@@ -379,7 +379,7 @@ namespace Generic.LightDataTable.SqlQuerys
 
                         var tValue = "";
                         foreach (var v in value)
-                            tValue += string.Format(v.GetType() == typeof(string) ? "String[%{0}%]," : "{0}, ", v);
+                            tValue += string.Format(v.GetType() == typeof(string) ? "String[{0}]," : "{0}, ", v);
                         sb.Append(tValue.TrimEnd(','));
                         break;
                     default:
