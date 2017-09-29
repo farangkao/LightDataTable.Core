@@ -9,6 +9,8 @@ https://www.nuget.org/packages/Generic.LightDataTable/
 3- .NETFramework 4.6
 
 4- .NETFramework 4.6.1
+
+5- .NETStandard 2.0
 ## What is LightDataTable
 LightDataTable is an object-relation mappar that enable .NET developers to work with relations data using objects.
 LightDataTable is an alternative to entityframwork. is more flexible and much faster than entity framework.
@@ -65,6 +67,13 @@ let's start building our models, lets build a simple models User
         public Role Role { get; set; }
 
         public List<Address> Address { get; set; }
+        
+        //[ExcludeFromAbstract] mean that it should not be included in the DataBase Update or insert.
+        // It aslo mean that it dose not exist in the Table User.
+        // use this attribute to include other property that you only want to use in the code and it should not be 
+        // saved to the database
+        [ExcludeFromAbstract]
+        public string test { get; set; }
     }
     
     [Table("Roles")]
