@@ -43,10 +43,10 @@ namespace Generic.LightDataTable.Transaction
             const string assemblyName = "ProcessedByFody";
             if (!Assembly.GetEntryAssembly().DefinedTypes.Any(a => a.Name.Contains(assemblyName)))
                 throw new Exception(
-                    "Fody.dll could not be found please install PropertyChanged.Fody and Fody. FodyWeavers.XML should look like <?xml version=\"1.0\" encoding=\"utf - 8\" ?>" +
-                    Environment.NewLine + "<Weavers>" +
-                    Environment.NewLine + "<PropertyChanged />" +
-                    Environment.NewLine + "</Weavers> ");
+                "Fody.dll could not be found please install Fody. FodyWeavers.XML should look like <?xml version=\"1.0\" encoding=\"utf - 8\" ?>" +
+                Environment.NewLine + "<Weavers>" +
+                Environment.NewLine + "<PropertyChanged />" +
+                Environment.NewLine + "</Weavers> ");
             _assLoaded = true;
             return;
         }
