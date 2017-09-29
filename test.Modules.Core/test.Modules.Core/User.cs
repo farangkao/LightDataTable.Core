@@ -20,7 +20,5 @@ namespace Test.Modules.Core
 
         [IndependentData]
         public Role Role { get; set; }
-
-
     }
 }

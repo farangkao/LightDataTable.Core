@@ -13,6 +13,9 @@ namespace Test.Modules.Core
         private static void Main(string[] args)
         {
 
+            var test = new User();
+            test.UserName = "sdasds";
+
             // lite database with migration cant use both in the same system so mssql or lite db
             using (var rep = new LiteRepository())
             {
@@ -26,7 +29,7 @@ namespace Test.Modules.Core
                 foreach (User user in users.Execute())
                 {
                     user.UserName = "test 2";
-                    user.Role.Name = "Administrator 1";
+                    user.Role.Name = "Administrator 2";
                     user.Address.First().AddressName = "Changed";
                     // now we could do rep.Save(user); but will choose to save the whole list later insetad
                 }

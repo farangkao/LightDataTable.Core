@@ -56,7 +56,7 @@ namespace Generic.LightDataTable.Transaction
             const string assemblyName = "ProcessedByFody";
             if (!Assembly.GetEntryAssembly().DefinedTypes.Any(a => a.Name.Contains(assemblyName)))
                 throw new Exception(
-                    "PropertyChanged.dll and Fody could not be found please install PropertyChanged.Fody and Fody. FodyWeavers.XML should look like <?xml version=\"1.0\" encoding=\"utf - 8\" ?>" +
+                    "Fody.dll could not be found please install PropertyChanged.Fody and Fody. FodyWeavers.XML should look like <?xml version=\"1.0\" encoding=\"utf - 8\" ?>" +
                     Environment.NewLine + "<Weavers>" +
                     Environment.NewLine + "<PropertyChanged />" +
                     Environment.NewLine + "</Weavers> ");
@@ -238,7 +238,7 @@ namespace Generic.LightDataTable.Transaction
                     {
                         dbMigration = this.Get<DBMigration>().Where(x => x.Name == name).Execute();
                     }
-                    catch (Exception e)
+                    catch
                     {
 
                     }
