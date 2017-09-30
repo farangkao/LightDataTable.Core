@@ -16,7 +16,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Generic.LightDataTable" Version="1.0.9" />
+    <PackageReference Include="Fody" Version="2.1.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\source\LightDataTable.Core\Generic.LightDataTable.csproj" />
   </ItemGroup>
 
 </Project>

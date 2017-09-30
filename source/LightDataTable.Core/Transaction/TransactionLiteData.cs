@@ -47,15 +47,12 @@ namespace Generic.LightDataTable.Transaction
         /// </summary>
         protected bool EnableMigration { get; private set; }
 
-        private static void LoadPropertyChangedAss()
+        private static void LoadPropertyChangedAss(Assembly ass)
         {
             if (_assLoaded)
                 return;
-
             const string assemblyName = "ProcessedByFody";
-            var ass = Assembly.GetEntryAssembly();
-
-            if (ass != null && ass.DefinedTypes != null && !ass.DefinedTypes.Any(a => a.Name.Contains(assemblyName)))
+            if (!ass.DefinedTypes.Any(a => a.Name.Contains(assemblyName)))
                 throw new Exception(
                     "Fody.dll could not be found please install Fody. FodyWeavers.XML should look like <?xml version=\"1.0\" encoding=\"utf - 8\" ?>" +
                     Environment.NewLine + "<Weavers>" +
@@ -81,7 +78,7 @@ namespace Generic.LightDataTable.Transaction
 
 
             EnableMigration = enableMigration;
-            LoadPropertyChangedAss();
+            LoadPropertyChangedAss(this.GetType().Assembly);
             if (string.IsNullOrEmpty(appSettingsOrSqlConnectionString))
                 if (string.IsNullOrEmpty(SqlConnectionStringString))
                     throw new Exception("appSettingsOrSqlConnectionString cant be empty");
@@ -110,9 +107,9 @@ namespace Generic.LightDataTable.Transaction
             if (!_tableMigrationCheck && EnableMigration)
             {
                 this.CreateTable<DBMigration>(false);
-
-                if (Assembly.GetEntryAssembly().DefinedTypes.Any(a => typeof(IMigrationConfig).IsAssignableFrom(a)))
-                    Config = Activator.CreateInstance(Assembly.GetEntryAssembly().DefinedTypes
+                var ass = this.GetType().Assembly;
+                if (ass.DefinedTypes.Any(a => typeof(IMigrationConfig).IsAssignableFrom(a)))
+                    Config = Activator.CreateInstance(ass.DefinedTypes
                         .First(a => typeof(IMigrationConfig).IsAssignableFrom(a))) as IMigrationConfig;
 
                 MigrationConfig(Config);

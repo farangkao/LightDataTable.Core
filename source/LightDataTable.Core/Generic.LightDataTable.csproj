@@ -1,20 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>netcoreapp2.0;netstandard2.0;net461;net451;net46;</TargetFrameworks>
-    <AssemblyVersion>1.0.0.9</AssemblyVersion>
-    <FileVersion>1.0.0.9</FileVersion>
-    <Version>1.0.9</Version>
+    <AssemblyVersion>1.0.0.10</AssemblyVersion>
+    <FileVersion>1.0.0.10</FileVersion>
+    <Version>1.0.10</Version>
     <Authors>Alen Toma</Authors>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageProjectUrl>https://github.com/AlenToma/LightDataTable.Core</PackageProjectUrl>
-    <PackageTags>object-relation mappar LinqToSql alternative to entityframework C# System.Reflection generic</PackageTags>
+    <PackageTags>object-relation mappar LinqToSql alternative-to-entityframework C# System.Reflection generic Microsoft EntityFramework EF Database Data O/RM ADO.NET</PackageTags>
     <PackageLicenseUrl>https://github.com/AlenToma/LightDataTable.Core/edit/master/LICENSE</PackageLicenseUrl>
     <Copyright>Copyright (c) 2016 Alen Toma</Copyright>
     <Description>LightDataTable is an object-relation mappar that enable .NET developers to work with relations data using objects. LightDataTable is an alternative to entityframwork. is more flexible and much faster than entity framework.</Description>
-    <PackageReleaseNotes>
-      Support for Migration
-      Support to SqlLite
-    </PackageReleaseNotes>
+    <PackageReleaseNotes>LinqToSql parsing fix.
+TransactionalData null exception in MVC fix</PackageReleaseNotes>
     <NeutralLanguage />
     <Platforms>AnyCPU</Platforms>
     <PackageIconUrl>https://raw.githubusercontent.com/AlenToma/LightDataTable.Core/master/icon.gif</PackageIconUrl>

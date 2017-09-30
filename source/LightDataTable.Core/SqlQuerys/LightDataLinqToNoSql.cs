@@ -33,7 +33,7 @@ namespace Generic.LightDataTable.SqlQuerys
         {
             _columns = new List<string>
             {
-                (typeof(T).GetCustomAttribute<Table>()?.Name ?? typeof(T).Name) + ".*"
+               "["+ (typeof(T).GetCustomAttribute<Table>()?.Name ?? typeof(T).Name) + "].*"
             };
             OrderBy = typeof(T).GetPrimaryKey().GetPropertyName();
 
@@ -54,7 +54,7 @@ namespace Generic.LightDataTable.SqlQuerys
             get
             {
                 var tableName = typeof(T).GetCustomAttribute<Table>()?.Name ?? typeof(T).Name;
-                var quary = "SELECT distinct " + string.Join(",", _columns) + " FROM " + tableName + " " + System.Environment.NewLine +
+                var quary = "SELECT distinct " + string.Join(",", _columns) + " FROM [" + tableName + "] " + System.Environment.NewLine +
                        string.Join(System.Environment.NewLine, JoinClauses.Values.Select(x => x.Item2)) +
                        System.Environment.NewLine + (WhereClause.Any() ? "WHERE " : string.Empty) + string.Join(" AND ", WhereClause.ToArray());
                 quary = quary.TrimEnd(" AND ").TrimEnd(" OR ");
@@ -343,7 +343,7 @@ namespace Generic.LightDataTable.SqlQuerys
             return b;
         }
 
-        protected override Expression VisitConstant(ConstantExpression c)
+        protected Expression VisitConstantFixed(ConstantExpression c, string memName = "")
         {
             IQueryable q = c.Value as IQueryable;
 
@@ -368,7 +368,10 @@ namespace Generic.LightDataTable.SqlQuerys
                         break;
 
                     case TypeCode.Object:
-                        var value = c.Value.GetType().GetFields().First().GetValue(c.Value) as IEnumerable;
+                        IEnumerable value = null;
+                        if (string.IsNullOrEmpty(memName))
+                            value = c.Value.GetType().GetFields().First().GetValue(c.Value) as IEnumerable;
+                        else value = c.Value.GetType().GetFields().FirstOrDefault(x => x.Name == memName)?.GetValue(c.Value) as IEnumerable ?? c.Value.GetType().GetFields().First().GetValue(c.Value) as IEnumerable;
                         if (value == null)
                             break;
                         if (value.GetType().IsInternalType())
@@ -389,6 +392,11 @@ namespace Generic.LightDataTable.SqlQuerys
             }
 
             return c;
+        }
+
+        protected override Expression VisitConstant(ConstantExpression c)
+        {
+            return VisitConstantFixed(c);
         }
 
         private Dictionary<string, string> _generatedKeys = new Dictionary<string, string>();
@@ -413,7 +421,8 @@ namespace Generic.LightDataTable.SqlQuerys
         {
             if (m.Expression != null && m.Expression.NodeType == ExpressionType.Constant && (_overridedNodeType == null))
             {
-                VisitConstant(m.Expression as ConstantExpression);
+               
+                VisitConstantFixed(m.Expression as ConstantExpression, m.Member?.Name);
                 return m;
             }
             else if (m.Expression != null && m.Expression.NodeType == ExpressionType.Parameter && (_overridedNodeType == null))

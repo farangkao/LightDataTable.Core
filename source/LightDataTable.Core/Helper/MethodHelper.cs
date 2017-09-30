@@ -41,6 +41,7 @@ namespace Generic.LightDataTable
             {typeof(byte[]), "varbinary(MAX)"}
         };
 
+
         internal static DbCommand ProcessSql(this ICustomRepository repository, DbConnection connection, DbTransaction tran, string sql)
         {
             var stringExp = new Regex(@"String\[.+?\]");

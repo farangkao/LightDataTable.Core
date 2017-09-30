@@ -476,8 +476,8 @@ namespace Generic.LightDataTable.Helper
                     {
                         var type = key.Value.Item2.Type.GetActualType();
                         var keyPrimary = type.GetPrimaryKey().GetPropertyName();
-                        var tb = type.GetCustomAttribute<Table>().Name ?? type.Name;
-                        sql.Append("ALTER TABLE " + key.Value.Item1 + " ADD FOREIGN KEY (" + key.Key + ") REFERENCES " + tb + "(" + keyPrimary + ");");
+                        var tb = type.GetCustomAttribute<Table>()?.Name ?? type.Name;
+                        sql.Append("ALTER TABLE [" + key.Value.Item1 + "] ADD FOREIGN KEY (" + key.Key + ") REFERENCES [" + tb + "](" + keyPrimary + ");");
 
                     }
                     var s = sql.ToString();
@@ -501,7 +501,7 @@ namespace Generic.LightDataTable.Helper
         {
             var type = o.GetType().GetActualType();
             var props = FastDeepCloner.DeepCloner.GetFastDeepClonerProperties(type);
-            var table = type.GetCustomAttribute<Table>()?.Name ?? type.Name;
+            var table ="[" + type.GetCustomAttribute<Table>()?.Name ?? type.Name + "]";
             var primaryKey = MethodHelper.GetPrimaryKey(o as IDbEntity);
             var primaryKeyValue = MethodHelper.ConvertValue<long>(primaryKey.GetValue(o));
             if (primaryKeyValue <= 0)
