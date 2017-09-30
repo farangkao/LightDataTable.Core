@@ -41,7 +41,9 @@ namespace Generic.LightDataTable.Transaction
             if (_assLoaded)
                 return;
             const string assemblyName = "ProcessedByFody";
-            if (!Assembly.GetEntryAssembly().DefinedTypes.Any(a => a.Name.Contains(assemblyName)))
+            var ass = Assembly.GetEntryAssembly();
+
+            if (ass != null && ass.DefinedTypes != null && !ass.DefinedTypes.Any(a => a.Name.Contains(assemblyName)))
                 throw new Exception(
                 "Fody.dll could not be found please install Fody. FodyWeavers.XML should look like <?xml version=\"1.0\" encoding=\"utf - 8\" ?>" +
                 Environment.NewLine + "<Weavers>" +

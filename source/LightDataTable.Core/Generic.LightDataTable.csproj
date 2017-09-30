@@ -95,28 +95,12 @@
 
   <ItemGroup>
     <None Update="FodyWeavers.xml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <ProjectDir Condition=" '$(ProjectDir)' == '' ">D:\Projects\LightDataTable.Core\source\LightDataTable.Core\</ProjectDir>
     <Configuration Condition=" '$(TargetFileName)' == '' ">Generic.LightDataTable.dll</Configuration>
-
   </PropertyGroup>
-
-
-  <UsingTask TaskName="MSBuildTasks.NotifyPropertyChangedTask" AssemblyFile="$(ProjectDir)\lib\MSBuildTasks.dll" />
-  <Target Name="AfterCompile">
-    <!--<Exec ConsoleToMsBuild="true" Command="$(OutDir)$(ConfigurationName)$(ProjectName)$(TargetName)$(TargetDir)$(ProjectDir)$(SolutionFileName)$(SolutionPath)$(SolutionDir)$(SolutionName)" />-->
-    <Message Text="$(ProjectDir)$(Configuration) skdjhaskjdh" Importance="high" />
-    <!--<Exec Command="$(OutDir)$(ConfigurationName)$(ProjectName)$(TargetName)$(TargetPath)$(ProjectPath)$(ProjectFileName)$(TargetExt)$(TargetFileName)$(DevEnvDir)$(TargetDir)$(ProjectDir)$(SolutionFileName)$(SolutionPath)$(SolutionDir)$(SolutionName)$(PlatformName)$(ProjectExt)$(SolutionExt)" />-->
-    <MSBuildTasks.NotifyPropertyChangedTask AssemblyPath="$(ProjectDir)obj\$(Configuration)\netstandard2.0\$(TargetFileName)" />
-  </Target>
-
-  <!--<Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="$(OutDir)$(ConfigurationName)$(ProjectName)$(TargetName)$(TargetPath)$(ProjectPath)$(ProjectFileName)$(TargetExt)$(TargetFileName)$(DevEnvDir)$(TargetDir)$(ProjectDir)$(SolutionFileName)$(SolutionPath)$(SolutionDir)$(SolutionName)$(PlatformName)$(ProjectExt)$(SolutionExt)" />
-  </Target>-->
-
 </Project>

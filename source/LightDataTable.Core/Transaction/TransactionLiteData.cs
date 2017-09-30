@@ -9,7 +9,8 @@ using System.Reflection;
 using Generic.LightDataTable.Interface;
 using Generic.LightDataTable.InterFace;
 using Generic.LightDataTable.Library;
-#if NET461 || NET451 || NET46 
+using System.IO;
+#if NET461 || NET451 || NET46
 using System.Data.SQLite;
 #elif NETCOREAPP2_0 || NETSTANDARD2_0
 using Microsoft.Data.Sqlite;
@@ -21,7 +22,6 @@ namespace Generic.LightDataTable.Transaction
     /// <inheritdoc />
     public class TransactionLiteData : ICustomRepository
     {
-
         /// <summary>
         /// 
         /// </summary>
@@ -47,14 +47,15 @@ namespace Generic.LightDataTable.Transaction
         /// </summary>
         protected bool EnableMigration { get; private set; }
 
-
         private static void LoadPropertyChangedAss()
         {
             if (_assLoaded)
                 return;
 
             const string assemblyName = "ProcessedByFody";
-            if (!Assembly.GetEntryAssembly().DefinedTypes.Any(a => a.Name.Contains(assemblyName)))
+            var ass = Assembly.GetEntryAssembly();
+
+            if (ass != null && ass.DefinedTypes != null && !ass.DefinedTypes.Any(a => a.Name.Contains(assemblyName)))
                 throw new Exception(
                     "Fody.dll could not be found please install Fody. FodyWeavers.XML should look like <?xml version=\"1.0\" encoding=\"utf - 8\" ?>" +
                     Environment.NewLine + "<Weavers>" +

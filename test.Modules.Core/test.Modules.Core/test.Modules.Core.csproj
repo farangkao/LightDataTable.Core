@@ -16,13 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\source\LightDataTable.Core\Generic.LightDataTable.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="FodyWeavers.xml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    <PackageReference Include="Generic.LightDataTable" Version="1.0.9" />
   </ItemGroup>
 
 </Project>
