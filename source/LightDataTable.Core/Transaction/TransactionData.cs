@@ -93,12 +93,9 @@ namespace Generic.LightDataTable.Transaction
                 this.CreateTable<DBMigration>(false);
                 var ass = this.GetType().Assembly;
                 if (ass.DefinedTypes.Any(a => typeof(IMigrationConfig).IsAssignableFrom(a)))
-                {
-                    Config = Activator.CreateInstance(ass.DefinedTypes
-                        .First(a => typeof(IMigrationConfig).IsAssignableFrom(a))) as IMigrationConfig;
-
-                    MigrationConfig(Config);
-                }
+                    Config = Activator.CreateInstance(ass.DefinedTypes.First(a => typeof(IMigrationConfig).IsAssignableFrom(a))) as IMigrationConfig;
+                else throw new Exception("EnableMigration is true but lightDataTable could not find IMigrationConfig in the current Assembly " + ass.GetName());
+                MigrationConfig(Config);
             }
             _tableMigrationCheck = true;
         }
