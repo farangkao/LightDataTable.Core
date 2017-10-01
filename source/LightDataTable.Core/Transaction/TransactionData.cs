@@ -92,12 +92,13 @@ namespace Generic.LightDataTable.Transaction
             {
                 this.CreateTable<DBMigration>(false);
                 var ass = this.GetType().Assembly;
-                if (ass.DefinedTypes.Any(a => typeof(IMigrationConfig).IsAssignableFrom(a))) { 
+                if (ass.DefinedTypes.Any(a => typeof(IMigrationConfig).IsAssignableFrom(a)))
+                {
                     Config = Activator.CreateInstance(ass.DefinedTypes
                         .First(a => typeof(IMigrationConfig).IsAssignableFrom(a))) as IMigrationConfig;
 
-                MigrationConfig(Config);
-                    }
+                    MigrationConfig(Config);
+                }
             }
             _tableMigrationCheck = true;
         }
@@ -255,6 +256,8 @@ namespace Generic.LightDataTable.Transaction
 
             if (type.GetTypeInfo().IsGenericType && type.GetTypeInfo().GetGenericTypeDefinition() == typeof(Nullable<>))
                 type = Nullable.GetUnderlyingType(type);
+            if (type.GetTypeInfo().IsEnum)
+                type = typeof(Int64);
 
             var param = new SqlParameter("", Activator.CreateInstance(type));
             return param.SqlDbType;
@@ -272,6 +275,9 @@ namespace Generic.LightDataTable.Transaction
         {
             if (attrName != null && attrName[0] != '@')
                 attrName = "@" + attrName;
+
+            if (value?.GetType().GetTypeInfo().IsEnum ?? false)
+                value = value.ConvertValue<long>();
 
             var sqlDbTypeValue = value ?? DBNull.Value;
             var param = new SqlParameter

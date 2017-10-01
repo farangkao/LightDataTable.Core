@@ -213,9 +213,10 @@ namespace Generic.LightDataTable
 
                 if (dataType.IsEnum)
                 {
-                    if (value.GetType() == typeof(int))
+                    if (value.GetType() == typeof(int) || value.GetType() == typeof(long))
                     {
-                        Enum.IsDefined(dataType, value);
+                        if (Enum.IsDefined(dataType,Convert.ToInt32(value)))
+                            value = Enum.ToObject(dataType, Convert.ToInt32(value));
                     }
                     else if (Enum.IsDefined(dataType, value))
                         value = Enum.Parse(dataType, value.ToString(), true);

@@ -31,21 +31,22 @@ namespace Generic.LightDataTable
         private static Dictionary<Type, String> DbMapper = new Dictionary<Type, string>()
         {
             {typeof(int), "BIGINT"},
-            {typeof(long), "INT"},
+            {typeof(long), "BIGINT"},
             {typeof(string), "NVARCHAR(4000)"},
             {typeof(bool), "BIT"},
             {typeof(DateTime), "DATETIME"},
             {typeof(float), "FLOAT"},
             {typeof(decimal), "DECIMAL(18,0)"},
             {typeof(Guid), "UNIQUEIDENTIFIER"},
-            {typeof(byte[]), "varbinary(MAX)"}
+            {typeof(byte[]), "varbinary(MAX)"},
         };
 
 
         internal static DbCommand ProcessSql(this ICustomRepository repository, DbConnection connection, DbTransaction tran, string sql)
         {
-            var stringExp = new Regex(@"String\[.+?\]");
-            var DateExp = new Regex(@"Date\[.+?\]");
+  
+            var stringExp = new Regex(@"String\[.*?\]|String\[.?\]");
+            var DateExp = new Regex(@"Date\[.*?\]|Date\[.?\]");
             var i = 0;
             var dicCols = new Dictionary<string, Tuple<object, SqlDbType>>();
             MatchCollection matches = null;
@@ -98,6 +99,9 @@ namespace Generic.LightDataTable
 
         public static string GetDbTypeByType(this Type type)
         {
+            if (type.GetTypeInfo().IsEnum)
+                type = typeof(Int64);
+
             if (Nullable.GetUnderlyingType(type) != null)
                 type = Nullable.GetUnderlyingType(type);
             return DbMapper.ContainsKey(type) ? DbMapper[type] : null;

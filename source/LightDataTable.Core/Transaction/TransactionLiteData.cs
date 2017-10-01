@@ -284,6 +284,8 @@ namespace Generic.LightDataTable.Transaction
 
             if (type.GetTypeInfo().IsGenericType && type.GetTypeInfo().GetGenericTypeDefinition() == typeof(Nullable<>))
                 type = Nullable.GetUnderlyingType(type);
+            if (type.GetTypeInfo().IsEnum)
+                type = typeof(Int64);
 
             var param = new SqlParameter("", Activator.CreateInstance(type));
             return param.SqlDbType;
@@ -301,6 +303,9 @@ namespace Generic.LightDataTable.Transaction
         {
             if (attrName != null && attrName[0] != '@')
                 attrName = "@" + attrName;
+
+            if (value?.GetType().GetTypeInfo().IsEnum ?? false)
+                value = value.ConvertValue<long>();
 
 #if NET461 || NET451 || NET46
            var sqlDbTypeValue = value ?? DBNull.Value;

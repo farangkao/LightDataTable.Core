@@ -44,7 +44,7 @@ namespace Generic.LightDataTable.Helper
 
                 var updateOnly = o.State == ItemState.Changed;
                 o.State = ItemState.Added;// reset State
-                var props = FastDeepCloner.DeepCloner.GetFastDeepClonerProperties(o.GetType());
+                var props = DeepCloner.GetFastDeepClonerProperties(o.GetType());
                 var primaryKey = MethodHelper.GetPrimaryKey(o);
                 var availableColumns = repository.ObjectColumns(o.GetType());
                 var objectRules = o.GetType().GetCustomAttribute<Rule>();
